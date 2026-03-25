@@ -25,7 +25,11 @@
     boxImage: "./assets/box.png"
   },
   assetVideos: {
-    boxOpenVideo: "./assets/box-open.mp4"
+    boxOpenVideo: "./assets/box-open.mp4",
+    dropRareVideo: "./assets/drop-rare.mp4",
+    dropEpicVideo: "./assets/drop-epic.mp4",
+    dropLegendaryVideo: "./assets/drop-legendary.mp4"
   }
 };
+
 

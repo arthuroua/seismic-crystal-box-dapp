@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="uk">
   <head>
     <meta charset="UTF-8" />
@@ -19,11 +19,11 @@
 
     <main class="container">
       <section class="hero glass">
-        <p class="chip">Seismic Testnet · Chain ID 5124</p>
+        <p class="chip">Seismic Testnet В· Chain ID 5124</p>
         <h1>Crystal Box -> Seismic Robot NFT</h1>
         <p class="subtitle">
-          1 box на день після check-in. З бокса падає кристал Rare/Epic/Legendary.
-          Для мінту робота потрібно: 5 Rare або 2 Epic або 1 Legendary.
+          1 box РЅР° РґРµРЅСЊ РїС–СЃР»СЏ check-in. Р— Р±РѕРєСЃР° РїР°РґР°С” РєСЂРёСЃС‚Р°Р» Rare/Epic/Legendary.
+          Р”Р»СЏ РјС–РЅС‚Сѓ СЂРѕР±РѕС‚Р° РїРѕС‚СЂС–Р±РЅРѕ: 5 Rare Р°Р±Рѕ 2 Epic Р°Р±Рѕ 1 Legendary.
         </p>
         <div class="hero-links">
           <a id="explorerLink" href="#" target="_blank" rel="noreferrer">Explorer</a>
@@ -107,7 +107,16 @@
     <div id="openAnimModal" class="open-modal">
       <div class="open-modal-content glass">
         <video id="boxOpenVideo" class="open-video" muted playsinline preload="auto"></video>
-        <p class="open-caption">Opening Box...</p>
+        <div class="modal-head"><p class="open-caption">Opening Box...</p><button id="openAnimCloseBtn" class="btn btn-secondary modal-close" type="button">Close</button></div>
+      </div>
+    </div>
+    <div id="dropAnimModal" class="open-modal">
+      <div class="open-modal-content glass">
+        <video id="dropVideo" class="open-video" muted playsinline preload="auto"></video>
+        <div class="modal-head">
+          <p id="dropCaption" class="open-caption">Crystal Drop...</p>
+          <button id="dropAnimCloseBtn" class="btn btn-secondary modal-close" type="button">Close</button>
+        </div>
       </div>
     </div>
 
@@ -115,3 +124,4 @@
     <script type="module" src="./app.js"></script>
   </body>
 </html>
+

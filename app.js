@@ -68,6 +68,11 @@ const el = {
 
   openAnimModal: document.getElementById("openAnimModal"),
   boxOpenVideo: document.getElementById("boxOpenVideo"),
+  openAnimCloseBtn: document.getElementById("openAnimCloseBtn"),
+  dropAnimModal: document.getElementById("dropAnimModal"),
+  dropVideo: document.getElementById("dropVideo"),
+  dropCaption: document.getElementById("dropCaption"),
+  dropAnimCloseBtn: document.getElementById("dropAnimCloseBtn"),
 
   explorerLink: document.getElementById("explorerLink"),
   faucetLink: document.getElementById("faucetLink"),
@@ -126,6 +131,8 @@ function bindEvents() {
   el.mintRareBtn.addEventListener("click", () => handleMint("rare"));
   el.mintEpicBtn.addEventListener("click", () => handleMint("epic"));
   el.mintLegendBtn.addEventListener("click", () => handleMint("legendary"));
+  el.openAnimCloseBtn?.addEventListener("click", hideOpenAnimation);
+  el.dropAnimCloseBtn?.addEventListener("click", hideDropAnimation);
 }
 
 function startTimer() {
@@ -509,7 +516,7 @@ async function handleOpenBox() {
     const tx = await state.contract.openBox();
     log(`Open box tx sent: ${tx.hash}`);
 
-    const animPromise = playOpenAnimation(2600);
+    const animPromise = playOpenAnimation(5600);
     const receipt = await tx.wait();
     await animPromise;
 
@@ -520,6 +527,7 @@ async function handleOpenBox() {
       updateCrystalPreview(crystalType);
       el.lastCrystalType.textContent = `Last crystal: ${crystalName}`;
       el.openState.textContent = `Drop: ${crystalName}`;
+      await playDropAnimation(crystalType, 6000);
     } else {
       el.openState.textContent = "Box opened.";
     }
@@ -528,6 +536,7 @@ async function handleOpenBox() {
     await refreshAll();
   } catch (error) {
     hideOpenAnimation();
+    hideDropAnimation();
     log(`Open box error: ${formatError(error)}`, "error");
   }
 }
@@ -687,7 +696,7 @@ async function playOpenAnimation(minDurationMs = 2500) {
   }
 
   const remaining = Math.max(0, minDurationMs - (Date.now() - start));
-  if (remaining > 0) await wait(remaining);
+  if (remaining > 0) await waitWithClose(el.openAnimCloseBtn, remaining);
 
   hideOpenAnimation();
 }
@@ -700,6 +709,62 @@ function hideOpenAnimation() {
   } catch {
     // noop
   }
+}
+
+function dropVideoByCrystal(crystalType) {
+  if (crystalType === CRYSTAL.RARE) return videos.dropRareVideo || "";
+  if (crystalType === CRYSTAL.EPIC) return videos.dropEpicVideo || "";
+  if (crystalType === CRYSTAL.LEGENDARY) return videos.dropLegendaryVideo || "";
+  return "";
+}
+
+async function playDropAnimation(crystalType, minDurationMs = 6000) {
+  const crystalName = crystalNameLocal(crystalType);
+  const videoSrc = dropVideoByCrystal(crystalType);
+
+  el.dropCaption.textContent = `Drop: ${crystalName}`;
+  el.dropAnimModal.classList.add("active");
+
+  const start = Date.now();
+  if (videoSrc) {
+    try {
+      el.dropVideo.src = videoSrc;
+      el.dropVideo.currentTime = 0;
+      await el.dropVideo.play();
+    } catch {
+      // timer fallback
+    }
+  }
+
+  const remaining = Math.max(0, minDurationMs - (Date.now() - start));
+  if (remaining > 0) await waitWithClose(el.dropAnimCloseBtn, remaining);
+
+  hideDropAnimation();
+}
+
+function hideDropAnimation() {
+  el.dropAnimModal.classList.remove("active");
+  try {
+    el.dropVideo.pause();
+    el.dropVideo.currentTime = 0;
+  } catch {
+    // noop
+  }
+}
+
+function waitWithClose(closeButton, ms) {
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      closeButton?.removeEventListener("click", onClose);
+      resolve();
+    };
+    const onClose = () => finish();
+    closeButton?.addEventListener("click", onClose, { once: true });
+    setTimeout(finish, ms);
+  });
 }
 
 function wait(ms) {

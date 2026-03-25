@@ -7,6 +7,7 @@ const videos = cfg.assetVideos || {};
 const CONTRACT_ABI = [
   "function checkInFeeWei() view returns (uint256)",
   "function CHECKIN_COOLDOWN() view returns (uint64)",
+  "function balanceOf(address owner) view returns (uint256)",
   "function getUserStatus(address user) view returns (uint32 boxes, uint64 lastCheckIn, uint64 nextCheckIn, bool canCheckIn)",
   "function getCrystalBalances(address user) view returns (uint32 rare, uint32 epic, uint32 legendary)",
   "function checkIn() payable",
@@ -36,6 +37,8 @@ const el = {
   walletProviderText: document.getElementById("walletProviderText"),
   walletState: document.getElementById("walletState"),
   walletBalanceText: document.getElementById("walletBalanceText"),
+  walletTxCountText: document.getElementById("walletTxCountText"),
+  walletNftCountText: document.getElementById("walletNftCountText"),
   contractState: document.getElementById("contractState"),
 
   progressBar: document.getElementById("progressBar"),
@@ -87,6 +90,8 @@ const state = {
   contract: null,
   account: null,
   walletBalanceWei: 0n,
+  walletTxCount: 0,
+  walletNftCount: 0,
   checkInFeeWei: 0n,
   cooldownSeconds: 86400,
   canCheckIn: false,
@@ -266,6 +271,8 @@ async function connectWallet(mode = "default", silent = false) {
     if (chainId !== Number(cfg.chainIdDecimal)) {
       el.walletState.textContent = `Wallet: ${shortAddr(state.account)} | Wrong chain: ${chainId}`;
       el.walletBalanceText.textContent = "Balance: wrong network";
+      el.walletTxCountText.textContent = "Tx count: wrong network";
+      el.walletNftCountText.textContent = "Your NFTs: wrong network";
       el.contractState.textContent = "Switch to Seismic Testnet.";
       updateUi();
       return;
@@ -342,6 +349,8 @@ function disconnectWallet() {
   state.contract = null;
   state.account = null;
   state.walletBalanceWei = 0n;
+  state.walletTxCount = 0;
+  state.walletNftCount = 0;
   state.checkInFeeWei = 0n;
   state.canCheckIn = false;
   state.boxBalance = 0;
@@ -353,6 +362,8 @@ function disconnectWallet() {
   el.walletProviderText.textContent = "Provider: -";
   el.walletState.textContent = "Wallet not connected";
   el.walletBalanceText.textContent = "Balance: -";
+  el.walletTxCountText.textContent = "Tx count: -";
+  el.walletNftCountText.textContent = "Your NFTs: -";
   el.contractState.textContent = "Contract: -";
   el.progressText.textContent = "00:00:00";
   el.nextCheckInText.textContent = "Next check-in: -";
@@ -395,7 +406,7 @@ async function addSeismicNetwork() {
 }
 
 async function refreshAll() {
-  await Promise.all([refreshWalletBalance(), refreshOnchainState()]);
+  await Promise.all([refreshWalletBalance(), refreshWalletStats(), refreshOnchainState()]);
   renderCountdown();
   updateUi();
 }
@@ -414,6 +425,40 @@ async function refreshWalletBalance() {
   } catch (error) {
     state.walletBalanceWei = 0n;
     log(`Balance read failed: ${formatError(error)}`, "warn");
+  }
+}
+
+async function refreshWalletStats() {
+  if (!state.provider || !state.account) {
+    state.walletTxCount = 0;
+    state.walletNftCount = 0;
+    el.walletTxCountText.textContent = "Tx count: -";
+    el.walletNftCountText.textContent = "Your NFTs: -";
+    return;
+  }
+
+  try {
+    const txCount = await state.provider.getTransactionCount(state.account, "latest");
+    state.walletTxCount = Number(txCount);
+    el.walletTxCountText.textContent = `Tx count: ${state.walletTxCount}`;
+  } catch (error) {
+    el.walletTxCountText.textContent = "Tx count: -";
+    log(`Tx count read failed: ${formatError(error)}`, "warn");
+  }
+
+  if (!state.contract) {
+    state.walletNftCount = 0;
+    el.walletNftCountText.textContent = "Your NFTs: -";
+    return;
+  }
+
+  try {
+    const nftCount = await state.contract.balanceOf(state.account);
+    state.walletNftCount = Number(nftCount);
+    el.walletNftCountText.textContent = `Your NFTs: ${state.walletNftCount}`;
+  } catch (error) {
+    el.walletNftCountText.textContent = "Your NFTs: -";
+    log(`NFT count read failed: ${formatError(error)}`, "warn");
   }
 }
 

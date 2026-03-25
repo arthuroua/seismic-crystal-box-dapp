@@ -338,8 +338,7 @@ h1 {
   margin-bottom: 8px;
 }
 
-.drop-image,
-.nft-image {
+.drop-image {
   width: 104px;
   height: 104px;
   object-fit: cover;
@@ -349,7 +348,19 @@ h1 {
 }
 
 .nft-image {
-  margin-top: 6px;
+  width: min(320px, 100%);
+  height: auto;
+  aspect-ratio: 3 / 4;
+  display: block;
+  margin: 10px auto 2px;
+  object-fit: cover;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 122, 210, 0.5);
+  background: linear-gradient(135deg, #1b1331, #110a1f);
+  filter: brightness(0.34) saturate(0.75) contrast(1.05) blur(1px);
+  box-shadow:
+    0 0 28px rgba(255, 77, 210, 0.18),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
 .box-stage {

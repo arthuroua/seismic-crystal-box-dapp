@@ -84,6 +84,7 @@ const state = {
   walletBalanceWei: 0n,
   checkInFeeWei: 0n,
   cooldownSeconds: 86400,
+  canCheckIn: false,
   boxBalance: 0,
   nextCheckInAt: 0,
   rare: 0,
@@ -335,6 +336,7 @@ function disconnectWallet() {
   state.account = null;
   state.walletBalanceWei = 0n;
   state.checkInFeeWei = 0n;
+  state.canCheckIn = false;
   state.boxBalance = 0;
   state.nextCheckInAt = 0;
   state.rare = 0;
@@ -422,6 +424,7 @@ async function refreshOnchainState() {
     state.checkInFeeWei = fee;
     state.cooldownSeconds = Number(cooldown);
     state.boxBalance = Number(status[0]);
+    state.canCheckIn = Boolean(status[3]);
     state.nextCheckInAt = Number(status[2]);
 
     state.rare = Number(balances[0]);
@@ -436,13 +439,13 @@ async function refreshOnchainState() {
 
     el.openState.textContent = state.boxBalance > 0 ? "Box is ready." : "No box yet. Do daily check-in.";
   } catch (error) {
+    state.canCheckIn = false;
     log(`Contract read failed: ${formatError(error)}`, "error");
   }
 }
 
 function getCanCheckInNow() {
-  if (!state.nextCheckInAt) return true;
-  return Math.floor(Date.now() / 1000) >= state.nextCheckInAt;
+  return Boolean(state.canCheckIn);
 }
 
 function renderCountdown() {
@@ -462,8 +465,13 @@ function renderCountdown() {
 
   const nowTs = Math.floor(Date.now() / 1000);
   const remaining = Math.max(0, state.nextCheckInAt - nowTs);
-  el.progressText.textContent = formatHms(remaining);
-  el.nextCheckInText.textContent = `Next check-in: ${formatDateTime(state.nextCheckInAt)}`;
+  if (state.nextCheckInAt > nowTs) {
+    el.progressText.textContent = formatHms(remaining);
+    el.nextCheckInText.textContent = `Next check-in: ${formatDateTime(state.nextCheckInAt)}`;
+  } else {
+    el.progressText.textContent = "WAIT";
+    el.nextCheckInText.textContent = "Next check-in: syncing...";
+  }
 
   const cooldown = Math.max(1, state.cooldownSeconds);
   const elapsed = Math.max(0, cooldown - remaining);

@@ -136,10 +136,32 @@ function startTimer() {
 }
 
 function getInjectedProviders() {
+  const uniq = new Set();
+  const providers = [];
+
+  const pushProvider = (p) => {
+    if (!p || uniq.has(p)) return;
+    uniq.add(p);
+    providers.push(p);
+  };
+
   const eth = window.ethereum;
-  if (!eth) return [];
-  if (Array.isArray(eth.providers) && eth.providers.length > 0) return eth.providers;
-  return [eth];
+  if (eth) {
+    if (Array.isArray(eth.providers) && eth.providers.length > 0) {
+      for (const p of eth.providers) pushProvider(p);
+    } else {
+      pushProvider(eth);
+    }
+  }
+
+  // Rabby often exposes a separate object in parallel with window.ethereum.
+  if (window.rabby) {
+    if (window.rabby.provider) pushProvider(window.rabby.provider);
+    if (window.rabby.ethereum) pushProvider(window.rabby.ethereum);
+    pushProvider(window.rabby);
+  }
+
+  return providers;
 }
 
 function detectProviderName(p) {
@@ -157,6 +179,19 @@ function pickProvider(mode = "default") {
     return providers.find((p) => p.isRabby) || null;
   }
 
+  if (mode === "metamask") {
+    return providers.find((p) => p.isMetaMask && !p.isRabby) || null;
+  }
+
+  if (mode === "current" && state.ethereumProvider) {
+    return state.ethereumProvider;
+  }
+
+  // Default priority: MetaMask -> Rabby -> first injected
+  const mm = providers.find((p) => p.isMetaMask && !p.isRabby);
+  if (mm) return mm;
+  const rabby = providers.find((p) => p.isRabby);
+  if (rabby) return rabby;
   return providers[0];
 }
 
@@ -191,10 +226,16 @@ function isContractReady() {
 }
 
 async function connectWallet(mode = "default", silent = false) {
-  const ethProvider = mode === "current" ? state.ethereumProvider : pickProvider(mode);
+  const ethProvider = pickProvider(mode);
 
   if (!ethProvider) {
-    if (!silent) log(mode === "rabby" ? "Rabby wallet not found." : "No injected wallet found.", "error");
+    if (!silent) {
+      if (mode === "rabby") {
+        log("Rabby not found. Check extension is enabled and site access is allowed.", "error");
+      } else {
+        log("No injected wallet found.", "error");
+      }
+    }
     return;
   }
 
@@ -267,6 +308,20 @@ async function switchWalletAccount() {
 }
 
 function disconnectWallet() {
+  const oldProvider = state.ethereumProvider;
+
+  // Best-effort permission revoke (supported in MetaMask/Rabby on some versions).
+  if (oldProvider?.request) {
+    oldProvider
+      .request({
+        method: "wallet_revokePermissions",
+        params: [{ eth_accounts: {} }]
+      })
+      .catch(() => {
+        // Local disconnect still works even when revoke is unsupported.
+      });
+  }
+
   if (state.ethereumProvider?.removeListener) {
     state.ethereumProvider.removeListener("accountsChanged", onAccountsChanged);
     state.ethereumProvider.removeListener("chainChanged", onChainChanged);

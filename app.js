@@ -132,6 +132,7 @@ const I18N = {
     boxOpened: "Box opened.",
     openingBox: "Opening Box...",
     crystalDrop: "Crystal Drop...",
+    mintReady: "Mint Ready...",
     close: "Close",
     wrongNetwork: "Wrong chain",
     seismicOk: "Seismic OK"
@@ -196,6 +197,10 @@ const el = {
   dropVideo: document.getElementById("dropVideo"),
   dropCaption: document.getElementById("dropCaption"),
   dropAnimCloseBtn: document.getElementById("dropAnimCloseBtn"),
+  mintAnimModal: document.getElementById("mintAnimModal"),
+  mintReadyVideo: document.getElementById("mintReadyVideo"),
+  mintReadyCaption: document.getElementById("mintReadyCaption"),
+  mintAnimCloseBtn: document.getElementById("mintAnimCloseBtn"),
   openCaption: document.getElementById("openCaption"),
 
   explorerLink: document.getElementById("explorerLink"),
@@ -238,6 +243,9 @@ function init() {
   if (videos.boxOpenVideo) {
     el.boxOpenVideo.src = videos.boxOpenVideo;
   }
+  if (videos.mintReadyVideo) {
+    el.mintReadyVideo.src = videos.mintReadyVideo;
+  }
 
   bindEvents();
   applyLocale();
@@ -263,6 +271,7 @@ function bindEvents() {
   el.mintLegendBtn.addEventListener("click", () => handleMint("legendary"));
   el.openAnimCloseBtn?.addEventListener("click", hideOpenAnimation);
   el.dropAnimCloseBtn?.addEventListener("click", hideDropAnimation);
+  el.mintAnimCloseBtn?.addEventListener("click", hideMintReadyAnimation);
 }
 
 function tr(key) {
@@ -298,8 +307,10 @@ function applyLocale() {
   el.mintLegendBtn.textContent = tr("mintLegendary");
   el.openCaption.textContent = tr("openingBox");
   el.dropCaption.textContent = tr("crystalDrop");
+  el.mintReadyCaption.textContent = tr("mintReady");
   el.openAnimCloseBtn.textContent = tr("close");
   el.dropAnimCloseBtn.textContent = tr("close");
+  el.mintAnimCloseBtn.textContent = tr("close");
 
   el.langUkBtn?.classList.toggle("active", state.locale === "uk");
   el.langEnBtn?.classList.toggle("active", state.locale === "en");
@@ -807,6 +818,7 @@ async function handleMint(type) {
   }
 
   try {
+    await playMintReadyAnimation(6000);
     const tx = await state.contract[fn]();
     log(`Mint tx (${requiredText}) sent: ${tx.hash}`);
 
@@ -830,6 +842,7 @@ async function handleMint(type) {
     logWithExplorer("Mint confirmed", tx.hash);
     await refreshAll();
   } catch (error) {
+    hideMintReadyAnimation();
     log(`Mint error: ${formatError(error)}`, "error");
   }
 }
@@ -990,6 +1003,35 @@ function hideDropAnimation() {
   try {
     el.dropVideo.pause();
     el.dropVideo.currentTime = 0;
+  } catch {
+    // noop
+  }
+}
+
+async function playMintReadyAnimation(minDurationMs = 6000) {
+  el.mintAnimModal.classList.add("active");
+
+  const start = Date.now();
+  if (videos.mintReadyVideo) {
+    try {
+      el.mintReadyVideo.currentTime = 0;
+      await el.mintReadyVideo.play();
+    } catch {
+      // timer fallback
+    }
+  }
+
+  const remaining = Math.max(0, minDurationMs - (Date.now() - start));
+  if (remaining > 0) await waitWithClose(el.mintAnimCloseBtn, remaining);
+
+  hideMintReadyAnimation();
+}
+
+function hideMintReadyAnimation() {
+  el.mintAnimModal.classList.remove("active");
+  try {
+    el.mintReadyVideo.pause();
+    el.mintReadyVideo.currentTime = 0;
   } catch {
     // noop
   }

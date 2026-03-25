@@ -28,6 +28,12 @@ function safePath(urlPath) {
 
 http
   .createServer((req, res) => {
+    if (req.url === "/health") {
+      res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
+      res.end("ok");
+      return;
+    }
+
     const reqPath = req.url === "/" ? "/index.html" : req.url;
     const filePath = safePath(reqPath);
 

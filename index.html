@@ -71,13 +71,21 @@
           <div class="box-stage">
             <img id="boxImage" alt="Seismic Box" class="box-image" />
           </div>
-          <div class="preview-card robo-preview">
-            <img id="crystalPreview" alt="Crystal" class="drop-image" />
-            <div class="preview-meta">
-              <p id="lastCrystalType">Last crystal: -</p>
-              <p id="rareCount">Rare: 0</p>
-              <p id="epicCount">Epic: 0</p>
-              <p id="legendaryCount">Legendary: 0</p>
+          <div class="preview-card robo-preview crystal-panel">
+            <p id="lastCrystalType">Last crystal: -</p>
+            <div class="crystal-grid">
+              <div id="rareCrystalCard" class="crystal-card is-empty">
+                <img id="rareCrystalImg" alt="Rare Crystal" class="drop-image" />
+                <p id="rareCount">Rare: 0</p>
+              </div>
+              <div id="epicCrystalCard" class="crystal-card is-empty">
+                <img id="epicCrystalImg" alt="Epic Crystal" class="drop-image" />
+                <p id="epicCount">Epic: 0</p>
+              </div>
+              <div id="legendaryCrystalCard" class="crystal-card is-empty">
+                <img id="legendaryCrystalImg" alt="Legendary Crystal" class="drop-image" />
+                <p id="legendaryCount">Legendary: 0</p>
+              </div>
             </div>
           </div>
           <button id="openBoxBtn" class="btn btn-primary">Open Box</button>

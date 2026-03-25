@@ -171,7 +171,12 @@ const el = {
   checkInBtn: document.getElementById("checkInBtn"),
 
   boxImage: document.getElementById("boxImage"),
-  crystalPreview: document.getElementById("crystalPreview"),
+  rareCrystalImg: document.getElementById("rareCrystalImg"),
+  epicCrystalImg: document.getElementById("epicCrystalImg"),
+  legendaryCrystalImg: document.getElementById("legendaryCrystalImg"),
+  rareCrystalCard: document.getElementById("rareCrystalCard"),
+  epicCrystalCard: document.getElementById("epicCrystalCard"),
+  legendaryCrystalCard: document.getElementById("legendaryCrystalCard"),
   lastCrystalType: document.getElementById("lastCrystalType"),
   rareCount: document.getElementById("rareCount"),
   epicCount: document.getElementById("epicCount"),
@@ -237,7 +242,9 @@ function init() {
   el.faucetLink.href = cfg.faucetUrl || "#";
 
   setImageSafe(el.boxImage, images.boxImage, "BOX");
-  setImageSafe(el.crystalPreview, images.rareCrystal, "RARE");
+  setImageSafe(el.rareCrystalImg, images.rareCrystal, "RARE");
+  setImageSafe(el.epicCrystalImg, images.epicCrystal || images.rareCrystal, "EPIC");
+  setImageSafe(el.legendaryCrystalImg, images.legendaryCrystal || images.epicCrystal || images.rareCrystal, "LEGENDARY");
   setImageSafe(el.nftPreview, images.nftRobot, "ROBOT");
 
   if (videos.boxOpenVideo) {
@@ -249,6 +256,7 @@ function init() {
 
   bindEvents();
   applyLocale();
+  updateCrystalCardsUi();
   startTimer();
   updateUi();
 
@@ -334,6 +342,7 @@ function applyLocale() {
     el.latestRobot.textContent = `${tr("robot")}: -`;
     el.latestSource.textContent = `${tr("sourceCrystal")}: -`;
     el.latestMagnitude.textContent = `${tr("magnitude")}: -`;
+    updateCrystalCardsUi();
     return;
   }
 
@@ -347,6 +356,7 @@ function applyLocale() {
   el.rareCount.textContent = `${tr("rare")}: ${state.rare}`;
   el.epicCount.textContent = `${tr("epic")}: ${state.epic}`;
   el.legendaryCount.textContent = `${tr("legendary")}: ${state.legendary}`;
+  updateCrystalCardsUi();
 }
 
 function startTimer() {
@@ -582,6 +592,7 @@ function disconnectWallet() {
   el.rareCount.textContent = `${tr("rare")}: 0`;
   el.epicCount.textContent = `${tr("epic")}: 0`;
   el.legendaryCount.textContent = `${tr("legendary")}: 0`;
+  updateCrystalCardsUi();
   el.payHintText.textContent = tr("connectToStart");
 
   updateUi();
@@ -697,10 +708,12 @@ async function refreshOnchainState() {
     el.rareCount.textContent = `${tr("rare")}: ${state.rare}`;
     el.epicCount.textContent = `${tr("epic")}: ${state.epic}`;
     el.legendaryCount.textContent = `${tr("legendary")}: ${state.legendary}`;
+    updateCrystalCardsUi();
 
     el.openState.textContent = state.boxBalance > 0 ? tr("boxReady") : tr("noBoxYet");
   } catch (error) {
     state.canCheckIn = false;
+    updateCrystalCardsUi();
     log(`Contract read failed: ${formatError(error)}`, "error");
   }
 }
@@ -885,9 +898,37 @@ function setLatestMint(tokenId, robotModel, sourceCrystal, magnitude) {
 }
 
 function updateCrystalPreview(crystalType) {
-  if (crystalType === CRYSTAL.RARE) return setImageSafe(el.crystalPreview, images.rareCrystal, "RARE");
-  if (crystalType === CRYSTAL.EPIC) return setImageSafe(el.crystalPreview, images.epicCrystal || images.rareCrystal, "EPIC");
-  setImageSafe(el.crystalPreview, images.legendaryCrystal || images.epicCrystal || images.rareCrystal, "LEGENDARY");
+  setLastDropCard(crystalType);
+}
+
+function updateCrystalCardsUi() {
+  updateCrystalCardState(el.rareCrystalCard, state.rare);
+  updateCrystalCardState(el.epicCrystalCard, state.epic);
+  updateCrystalCardState(el.legendaryCrystalCard, state.legendary);
+}
+
+function updateCrystalCardState(card, amount) {
+  if (!card) return;
+  card.classList.toggle("has-amount", amount > 0);
+  card.classList.toggle("is-empty", amount < 1);
+}
+
+function setLastDropCard(crystalType) {
+  el.rareCrystalCard?.classList.remove("last-drop");
+  el.epicCrystalCard?.classList.remove("last-drop");
+  el.legendaryCrystalCard?.classList.remove("last-drop");
+
+  if (crystalType === CRYSTAL.RARE) {
+    el.rareCrystalCard?.classList.add("last-drop");
+    return;
+  }
+  if (crystalType === CRYSTAL.EPIC) {
+    el.epicCrystalCard?.classList.add("last-drop");
+    return;
+  }
+  if (crystalType === CRYSTAL.LEGENDARY) {
+    el.legendaryCrystalCard?.classList.add("last-drop");
+  }
 }
 
 function crystalNameLocal(crystalType) {

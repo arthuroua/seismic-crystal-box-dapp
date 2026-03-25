@@ -279,6 +279,57 @@ h1 {
   min-height: 132px;
 }
 
+.crystal-panel {
+  grid-template-columns: 1fr;
+}
+
+.crystal-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.crystal-card {
+  border: 1px solid rgba(255, 102, 219, 0.24);
+  border-radius: 12px;
+  background: rgba(12, 10, 24, 0.7);
+  padding: 8px;
+  text-align: center;
+  transition: filter 180ms ease, opacity 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.crystal-card p {
+  margin: 8px 0 0;
+  color: #f2e8ff;
+}
+
+.crystal-card .drop-image {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 4;
+}
+
+.crystal-card.is-empty {
+  opacity: 0.45;
+  filter: grayscale(0.7) brightness(0.75);
+}
+
+.crystal-card.has-amount {
+  opacity: 1;
+  filter: none;
+  border-color: rgba(255, 150, 220, 0.6);
+  box-shadow:
+    0 0 18px rgba(255, 87, 204, 0.28),
+    inset 0 0 0 1px rgba(255, 183, 76, 0.22);
+}
+
+.crystal-card.last-drop {
+  border-color: rgba(255, 191, 110, 0.86);
+  box-shadow:
+    0 0 24px rgba(255, 166, 80, 0.34),
+    0 0 14px rgba(255, 99, 199, 0.3);
+}
+
 .robo-preview-single {
   grid-template-columns: 1fr;
 }

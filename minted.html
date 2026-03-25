@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mint Success | Seismic Robot NFT</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./minted.css" />
+  </head>
+  <body>
+    <main class="wrap">
+      <section class="card">
+        <p class="chip">Mint Confirmed</p>
+        <h1>Seismic Robot NFT Minted</h1>
+        <p class="sub">Share your mint on X with one click.</p>
+
+        <div class="nft-layout">
+          <img id="nftImage" class="nft-image" alt="Minted NFT" />
+          <div class="meta">
+            <p id="tokenIdText">Token: -</p>
+            <p id="robotText">Robot: -</p>
+            <p id="sourceText">Source crystal: -</p>
+            <p id="magnitudeText">Magnitude: -</p>
+            <p id="txText">Tx: -</p>
+          </div>
+        </div>
+
+        <div class="share-preview-wrap">
+          <img id="sharePreview" class="share-preview" alt="Share image preview" />
+        </div>
+
+        <div class="actions">
+          <button id="shareXBtn" class="btn">Share to X</button>
+          <button id="downloadBtn" class="btn btn-secondary">Download Image</button>
+          <a id="homeBtn" class="btn btn-ghost" href="./index.html">Back to Site</a>
+        </div>
+        <p id="shareHint" class="hint"></p>
+      </section>
+
+      <footer class="site-footer">
+        <p>
+          Creator: <strong>arthuro</strong> |
+          <a href="https://x.com/arthuriosman" target="_blank" rel="noreferrer">X / Twitter</a>
+        </p>
+      </footer>
+    </main>
+
+    <script src="./config.js"></script>
+    <script src="./minted.js"></script>
+  </body>
+</html>

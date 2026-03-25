@@ -831,6 +831,11 @@ async function handleMint(type) {
   }
 
   try {
+    let mintedTokenId = null;
+    let mintedRobotModel = null;
+    let mintedSourceCrystal = null;
+    let mintedMagnitude = null;
+
     await playMintReadyAnimation(6000);
     const tx = await state.contract[fn]();
     log(`Mint tx (${requiredText}) sent: ${tx.hash}`);
@@ -839,21 +844,43 @@ async function handleMint(type) {
     const parsed = parseEvent(receipt.logs, "RobotMinted");
 
     if (parsed) {
+      mintedTokenId = parsed.tokenId.toString();
+      mintedRobotModel = Number(parsed.robotModel);
+      mintedSourceCrystal = crystalNameLocal(Number(parsed.sourceCrystal));
+      mintedMagnitude = Number(parsed.magnitude);
+
       setLatestMint(
-        parsed.tokenId.toString(),
-        Number(parsed.robotModel),
-        crystalNameLocal(Number(parsed.sourceCrystal)),
-        Number(parsed.magnitude)
+        mintedTokenId,
+        mintedRobotModel,
+        mintedSourceCrystal,
+        mintedMagnitude
       );
-      el.mintState.textContent = `Minted token #${parsed.tokenId.toString()}`;
+      el.mintState.textContent = `Minted token #${mintedTokenId}`;
     } else {
       const tokenId = await getLatestTokenId();
-      if (tokenId) await hydrateMintFromToken(tokenId);
+      if (tokenId) {
+        mintedTokenId = String(tokenId);
+        const meta = await state.contract.robotMeta(tokenId);
+        mintedRobotModel = Number(meta[0]);
+        mintedSourceCrystal = crystalNameLocal(Number(meta[1]));
+        mintedMagnitude = Number(meta[2]);
+        setLatestMint(mintedTokenId, mintedRobotModel, mintedSourceCrystal, mintedMagnitude);
+      }
       el.mintState.textContent = "Mint success.";
     }
 
     logWithExplorer("Mint confirmed", tx.hash);
     await refreshAll();
+
+    if (mintedTokenId) {
+      openMintSuccessPage({
+        tokenId: mintedTokenId,
+        robotModel: mintedRobotModel ?? 0,
+        sourceCrystal: mintedSourceCrystal || "Unknown",
+        magnitude: mintedMagnitude ?? 0,
+        txHash: tx.hash
+      });
+    }
   } catch (error) {
     hideMintReadyAnimation();
     log(`Mint error: ${formatError(error)}`, "error");
@@ -1076,6 +1103,18 @@ function hideMintReadyAnimation() {
   } catch {
     // noop
   }
+}
+
+function openMintSuccessPage({ tokenId, robotModel, sourceCrystal, magnitude, txHash }) {
+  const params = new URLSearchParams({
+    tokenId: String(tokenId),
+    robotModel: String(robotModel),
+    sourceCrystal: String(sourceCrystal),
+    magnitude: String(magnitude),
+    txHash: String(txHash || ""),
+    image: String(images.nftRobot || "")
+  });
+  window.location.href = `./minted.html?${params.toString()}`;
 }
 
 function waitWithClose(closeButton, ms) {

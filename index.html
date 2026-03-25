@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
+    <div class="bg-grid"></div>
     <div class="bg-orb orb-a"></div>
     <div class="bg-orb orb-b"></div>
 
@@ -21,8 +22,8 @@
         <p class="chip">Seismic Testnet · Chain ID 5124</p>
         <h1>Crystal Box -> Seismic Robot NFT</h1>
         <p class="subtitle">
-          1 box в день після check-in. З бокса падає кристал Rare/Epic/Legendary. Для мінту
-          робота потрібно: 5 Rare або 2 Epic або 1 Legendary.
+          1 box на день після check-in. З бокса падає кристал Rare/Epic/Legendary.
+          Для мінту робота потрібно: 5 Rare або 2 Epic або 1 Legendary.
         </p>
         <div class="hero-links">
           <a id="explorerLink" href="#" target="_blank" rel="noreferrer">Explorer</a>
@@ -32,12 +33,18 @@
 
       <section class="grid">
         <article class="panel glass">
-          <h2>1) Підключення</h2>
-          <button id="connectBtn" class="btn">Connect Wallet</button>
-          <button id="addNetworkBtn" class="btn btn-secondary">Add Seismic Network</button>
-          <p id="walletState" class="muted">Wallet не підключений</p>
+          <h2>1) Wallet</h2>
+          <div class="wallet-grid">
+            <button id="connectBtn" class="btn">Connect Wallet</button>
+            <button id="connectRabbyBtn" class="btn btn-rabby">Connect Rabby</button>
+            <button id="switchWalletBtn" class="btn btn-secondary">Switch Wallet</button>
+            <button id="disconnectBtn" class="btn btn-danger">Disconnect</button>
+          </div>
+          <p id="walletProviderText" class="muted">Provider: -</p>
+          <p id="walletState" class="muted">Wallet not connected</p>
           <p id="walletBalanceText" class="muted">Balance: -</p>
           <p id="contractState" class="muted">Contract: -</p>
+          <button id="addNetworkBtn" class="btn btn-secondary">Add Seismic Network</button>
         </article>
 
         <article class="panel glass">
@@ -49,12 +56,12 @@
           <p id="nextCheckInText" class="muted">Next check-in: -</p>
           <p id="feeText" class="muted">Check-in fee: -</p>
           <p id="boxBalanceText" class="muted">Boxes: 0</p>
-          <p id="payHintText" class="muted">Підключи wallet, щоб забрати check-in.</p>
+          <p id="payHintText" class="muted">Connect wallet to start.</p>
           <button id="checkInBtn" class="btn">Daily Check-in (+1 Box)</button>
         </article>
 
         <article class="panel panel-preview glass">
-          <h2>3) Відкрити Box</h2>
+          <h2>3) Open Box</h2>
           <div class="box-stage">
             <img id="boxImage" alt="Seismic Box" class="box-image" />
           </div>

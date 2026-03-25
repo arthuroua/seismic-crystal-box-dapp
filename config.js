@@ -1,4 +1,4 @@
-window.SEISMIC_DAPP_CONFIG = {
+﻿window.SEISMIC_DAPP_CONFIG = {
   projectName: "Seismic Crystal Box",
   chainIdHex: "0x1404",
   chainIdDecimal: 5124,
@@ -14,7 +14,7 @@ window.SEISMIC_DAPP_CONFIG = {
   faucetUrl: "https://community-faucet.seismictest.net/",
 
   // Set deployed contract address here.
-  contractAddress: "0x0000000000000000000000000000000000000000",
+  contractAddress: "0x6BF9a43fAE91614FeEdBf3c50A6b32c5a20E7081",
 
   // Optional local images (you said you will add them).
   assetImages: {
@@ -28,3 +28,4 @@ window.SEISMIC_DAPP_CONFIG = {
     boxOpenVideo: "./assets/box-open.mp4"
   }
 };
+

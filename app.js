@@ -28,7 +28,12 @@ const CRYSTAL = {
 
 const el = {
   connectBtn: document.getElementById("connectBtn"),
+  connectRabbyBtn: document.getElementById("connectRabbyBtn"),
+  switchWalletBtn: document.getElementById("switchWalletBtn"),
+  disconnectBtn: document.getElementById("disconnectBtn"),
   addNetworkBtn: document.getElementById("addNetworkBtn"),
+
+  walletProviderText: document.getElementById("walletProviderText"),
   walletState: document.getElementById("walletState"),
   walletBalanceText: document.getElementById("walletBalanceText"),
   contractState: document.getElementById("contractState"),
@@ -70,6 +75,8 @@ const el = {
 };
 
 const state = {
+  ethereumProvider: null,
+  providerName: "-",
   provider: null,
   signer: null,
   contract: null,
@@ -93,7 +100,7 @@ function init() {
 
   setImageSafe(el.boxImage, images.boxImage, "BOX");
   setImageSafe(el.crystalPreview, images.rareCrystal, "RARE");
-  setImageSafe(el.nftPreview, images.nftRobot, "SEISMIC ROBOT");
+  setImageSafe(el.nftPreview, images.nftRobot, "ROBOT");
 
   if (videos.boxOpenVideo) {
     el.boxOpenVideo.src = videos.boxOpenVideo;
@@ -103,33 +110,79 @@ function init() {
   startTimer();
   updateUi();
 
-  log("Готово. Підключи wallet і відкривай бокси.");
+  log("Ready. Connect wallet to start.");
 }
 
 function bindEvents() {
-  el.connectBtn.addEventListener("click", connectWallet);
+  el.connectBtn.addEventListener("click", () => connectWallet("default"));
+  el.connectRabbyBtn.addEventListener("click", () => connectWallet("rabby"));
+  el.switchWalletBtn.addEventListener("click", switchWalletAccount);
+  el.disconnectBtn.addEventListener("click", disconnectWallet);
   el.addNetworkBtn.addEventListener("click", addSeismicNetwork);
+
   el.checkInBtn.addEventListener("click", handleCheckIn);
   el.openBoxBtn.addEventListener("click", handleOpenBox);
   el.mintRareBtn.addEventListener("click", () => handleMint("rare"));
   el.mintEpicBtn.addEventListener("click", () => handleMint("epic"));
   el.mintLegendBtn.addEventListener("click", () => handleMint("legendary"));
-
-  if (window.ethereum) {
-    window.ethereum.on("accountsChanged", () => window.location.reload());
-    window.ethereum.on("chainChanged", () => window.location.reload());
-  }
 }
 
 function startTimer() {
-  if (state.timerId) {
-    clearInterval(state.timerId);
-  }
-
+  if (state.timerId) clearInterval(state.timerId);
   state.timerId = setInterval(() => {
     renderCountdown();
     updateUi();
   }, 1000);
+}
+
+function getInjectedProviders() {
+  const eth = window.ethereum;
+  if (!eth) return [];
+  if (Array.isArray(eth.providers) && eth.providers.length > 0) return eth.providers;
+  return [eth];
+}
+
+function detectProviderName(p) {
+  if (!p) return "-";
+  if (p.isRabby) return "Rabby";
+  if (p.isMetaMask) return "MetaMask";
+  return "Injected";
+}
+
+function pickProvider(mode = "default") {
+  const providers = getInjectedProviders();
+  if (providers.length === 0) return null;
+
+  if (mode === "rabby") {
+    return providers.find((p) => p.isRabby) || null;
+  }
+
+  return providers[0];
+}
+
+function attachProviderListeners(ethProvider) {
+  if (!ethProvider || typeof ethProvider.on !== "function") return;
+
+  ethProvider.removeListener?.("accountsChanged", onAccountsChanged);
+  ethProvider.removeListener?.("chainChanged", onChainChanged);
+
+  ethProvider.on("accountsChanged", onAccountsChanged);
+  ethProvider.on("chainChanged", onChainChanged);
+}
+
+function onAccountsChanged(accounts) {
+  if (!accounts || accounts.length === 0) {
+    disconnectWallet();
+    return;
+  }
+
+  if (state.account && accounts[0].toLowerCase() !== state.account.toLowerCase()) {
+    connectWallet("current", true);
+  }
+}
+
+function onChainChanged() {
+  connectWallet("current", true);
 }
 
 function isContractReady() {
@@ -137,14 +190,129 @@ function isContractReady() {
   return ethers.isAddress(addr) && addr !== ethers.ZeroAddress;
 }
 
-async function addSeismicNetwork() {
-  if (!window.ethereum) {
-    log("MetaMask або сумісний wallet не знайдено.", "error");
+async function connectWallet(mode = "default", silent = false) {
+  const ethProvider = mode === "current" ? state.ethereumProvider : pickProvider(mode);
+
+  if (!ethProvider) {
+    if (!silent) log(mode === "rabby" ? "Rabby wallet not found." : "No injected wallet found.", "error");
     return;
   }
 
   try {
-    await window.ethereum.request({
+    await ethProvider.request({ method: "eth_requestAccounts" });
+
+    state.ethereumProvider = ethProvider;
+    state.providerName = detectProviderName(ethProvider);
+    state.provider = new ethers.BrowserProvider(ethProvider);
+    state.signer = await state.provider.getSigner();
+    state.account = await state.signer.getAddress();
+
+    attachProviderListeners(ethProvider);
+
+    const network = await state.provider.getNetwork();
+    const chainId = Number(network.chainId);
+
+    el.walletProviderText.textContent = `Provider: ${state.providerName}`;
+
+    if (chainId !== Number(cfg.chainIdDecimal)) {
+      el.walletState.textContent = `Wallet: ${shortAddr(state.account)} | Wrong chain: ${chainId}`;
+      el.walletBalanceText.textContent = "Balance: wrong network";
+      el.contractState.textContent = "Switch to Seismic Testnet.";
+      updateUi();
+      return;
+    }
+
+    el.walletState.textContent = `Wallet: ${shortAddr(state.account)} | Seismic OK`;
+
+    if (!isContractReady()) {
+      el.contractState.textContent = "Set contractAddress in config.js";
+      await refreshWalletBalance();
+      updateUi();
+      return;
+    }
+
+    state.contract = new ethers.Contract(cfg.contractAddress, CONTRACT_ABI, state.signer);
+    el.contractState.textContent = `Contract: ${shortAddr(cfg.contractAddress)}`;
+
+    await refreshAll();
+    if (!silent) log(`Connected via ${state.providerName}.`);
+  } catch (error) {
+    if (!silent) log(`Connect error: ${formatError(error)}`, "error");
+  }
+
+  updateUi();
+}
+
+async function switchWalletAccount() {
+  if (!state.ethereumProvider) {
+    await connectWallet("default");
+    return;
+  }
+
+  try {
+    if (state.ethereumProvider.isMetaMask || state.ethereumProvider.isRabby) {
+      await state.ethereumProvider.request({
+        method: "wallet_requestPermissions",
+        params: [{ eth_accounts: {} }]
+      });
+    } else {
+      await state.ethereumProvider.request({ method: "eth_requestAccounts" });
+    }
+
+    await connectWallet("current", true);
+    log("Wallet account switched.");
+  } catch (error) {
+    log(`Switch wallet failed: ${formatError(error)}`, "warn");
+  }
+}
+
+function disconnectWallet() {
+  if (state.ethereumProvider?.removeListener) {
+    state.ethereumProvider.removeListener("accountsChanged", onAccountsChanged);
+    state.ethereumProvider.removeListener("chainChanged", onChainChanged);
+  }
+
+  state.ethereumProvider = null;
+  state.providerName = "-";
+  state.provider = null;
+  state.signer = null;
+  state.contract = null;
+  state.account = null;
+  state.walletBalanceWei = 0n;
+  state.checkInFeeWei = 0n;
+  state.boxBalance = 0;
+  state.nextCheckInAt = 0;
+  state.rare = 0;
+  state.epic = 0;
+  state.legendary = 0;
+
+  el.walletProviderText.textContent = "Provider: -";
+  el.walletState.textContent = "Wallet not connected";
+  el.walletBalanceText.textContent = "Balance: -";
+  el.contractState.textContent = "Contract: -";
+  el.progressText.textContent = "00:00:00";
+  el.nextCheckInText.textContent = "Next check-in: -";
+  el.progressBar.style.width = "0%";
+  el.feeText.textContent = "Check-in fee: -";
+  el.boxBalanceText.textContent = "Boxes: 0";
+  el.rareCount.textContent = "Rare: 0";
+  el.epicCount.textContent = "Epic: 0";
+  el.legendaryCount.textContent = "Legendary: 0";
+  el.payHintText.textContent = "Connect wallet to start.";
+
+  updateUi();
+  log("Wallet disconnected (local session).", "warn");
+}
+
+async function addSeismicNetwork() {
+  const eth = state.ethereumProvider || window.ethereum;
+  if (!eth) {
+    log("No injected wallet found.", "error");
+    return;
+  }
+
+  try {
+    await eth.request({
       method: "wallet_addEthereumChain",
       params: [
         {
@@ -156,55 +324,10 @@ async function addSeismicNetwork() {
         }
       ]
     });
-
-    log("Seismic Testnet додано у wallet.");
+    log("Seismic Testnet added.");
   } catch (error) {
-    log(`Не вдалося додати мережу: ${formatError(error)}`, "error");
+    log(`Network add failed: ${formatError(error)}`, "error");
   }
-}
-
-async function connectWallet() {
-  if (!window.ethereum) {
-    log("Немає доступного EVM wallet у браузері.", "error");
-    el.walletState.textContent = "Постав MetaMask або інший EVM wallet.";
-    return;
-  }
-
-  try {
-    await window.ethereum.request({ method: "eth_requestAccounts" });
-    state.provider = new ethers.BrowserProvider(window.ethereum);
-    state.signer = await state.provider.getSigner();
-    state.account = await state.signer.getAddress();
-
-    const network = await state.provider.getNetwork();
-    const chainId = Number(network.chainId);
-    if (chainId !== Number(cfg.chainIdDecimal)) {
-      el.walletState.textContent = `Wallet: ${shortAddr(state.account)} | Wrong chain: ${chainId}`;
-      el.walletBalanceText.textContent = "Balance: wrong network";
-      el.contractState.textContent = "Перемкни wallet на Seismic Testnet.";
-      updateUi();
-      return;
-    }
-
-    el.walletState.textContent = `Wallet: ${shortAddr(state.account)} | Seismic OK`;
-
-    if (!isContractReady()) {
-      el.contractState.textContent = "Вкажи адресу контракту в config.js";
-      await refreshWalletBalance();
-      updateUi();
-      return;
-    }
-
-    state.contract = new ethers.Contract(cfg.contractAddress, CONTRACT_ABI, state.signer);
-    el.contractState.textContent = `Contract: ${shortAddr(cfg.contractAddress)}`;
-
-    await refreshAll();
-    log("Wallet підключено. Дані контракту оновлено.");
-  } catch (error) {
-    log(`Помилка підключення: ${formatError(error)}`, "error");
-  }
-
-  updateUi();
 }
 
 async function refreshAll() {
@@ -226,14 +349,12 @@ async function refreshWalletBalance() {
     el.walletBalanceText.textContent = `Balance: ${formatSeis(balance)} SEIS`;
   } catch (error) {
     state.walletBalanceWei = 0n;
-    log(`Не вдалося зчитати баланс: ${formatError(error)}`, "warn");
+    log(`Balance read failed: ${formatError(error)}`, "warn");
   }
 }
 
 async function refreshOnchainState() {
-  if (!state.contract || !state.account) {
-    return;
-  }
+  if (!state.contract || !state.account) return;
 
   try {
     const [fee, cooldown, status, balances] = await Promise.all([
@@ -258,9 +379,9 @@ async function refreshOnchainState() {
     el.epicCount.textContent = `Epic: ${state.epic}`;
     el.legendaryCount.textContent = `Legendary: ${state.legendary}`;
 
-    el.openState.textContent = state.boxBalance > 0 ? "Box готовий до відкриття." : "Нема box. Зроби daily check-in.";
+    el.openState.textContent = state.boxBalance > 0 ? "Box is ready." : "No box yet. Do daily check-in.";
   } catch (error) {
-    log(`Не вдалося прочитати контракт: ${formatError(error)}`, "error");
+    log(`Contract read failed: ${formatError(error)}`, "error");
   }
 }
 
@@ -279,7 +400,7 @@ function renderCountdown() {
 
   if (getCanCheckInNow()) {
     el.progressText.textContent = "READY";
-    el.nextCheckInText.textContent = "Next check-in: доступний зараз";
+    el.nextCheckInText.textContent = "Next check-in: available now";
     el.progressBar.style.width = "100%";
     return;
   }
@@ -295,51 +416,35 @@ function renderCountdown() {
 }
 
 async function handleCheckIn() {
-  if (!state.contract) {
-    log("Підключи wallet і контракт перед check-in.", "warn");
-    return;
-  }
+  if (!state.contract) return log("Connect wallet and contract first.", "warn");
 
   await refreshAll();
 
-  if (!getCanCheckInNow()) {
-    log("Check-in доступний раз на 24 години.", "warn");
-    return;
-  }
-
-  if (state.walletBalanceWei < state.checkInFeeWei) {
-    log("Недостатньо SEIS для check-in. Використай Faucet.", "warn");
-    return;
-  }
+  if (!getCanCheckInNow()) return log("Check-in available once per 24h.", "warn");
+  if (state.walletBalanceWei < state.checkInFeeWei) return log("Not enough SEIS. Use faucet.", "warn");
 
   try {
-    log(`Підтвердь оплату ${formatSeis(state.checkInFeeWei)} SEIS у wallet.`);
+    log(`Confirm payment ${formatSeis(state.checkInFeeWei)} SEIS.`);
     const tx = await state.contract.checkIn({ value: state.checkInFeeWei });
-    log(`Check-in tx відправлено: ${tx.hash}`);
+    log(`Check-in tx sent: ${tx.hash}`);
 
     await tx.wait();
-    logWithExplorer("Check-in підтверджено", tx.hash);
+    logWithExplorer("Check-in confirmed", tx.hash);
     await refreshAll();
   } catch (error) {
-    log(`Check-in помилка: ${formatError(error)}`, "error");
+    log(`Check-in error: ${formatError(error)}`, "error");
   }
 }
 
 async function handleOpenBox() {
-  if (!state.contract) {
-    log("Підключи wallet і контракт перед open box.", "warn");
-    return;
-  }
+  if (!state.contract) return log("Connect wallet and contract first.", "warn");
 
   await refreshOnchainState();
-  if (state.boxBalance < 1) {
-    log("Немає box для відкриття.", "warn");
-    return;
-  }
+  if (state.boxBalance < 1) return log("No box available.", "warn");
 
   try {
     const tx = await state.contract.openBox();
-    log(`Open box tx відправлено: ${tx.hash}`);
+    log(`Open box tx sent: ${tx.hash}`);
 
     const animPromise = playOpenAnimation(2600);
     const receipt = await tx.wait();
@@ -351,24 +456,21 @@ async function handleOpenBox() {
       const crystalName = crystalNameLocal(crystalType);
       updateCrystalPreview(crystalType);
       el.lastCrystalType.textContent = `Last crystal: ${crystalName}`;
-      el.openState.textContent = `Випав кристал: ${crystalName}`;
+      el.openState.textContent = `Drop: ${crystalName}`;
     } else {
-      el.openState.textContent = "Box відкрито, кристал зараховано.";
+      el.openState.textContent = "Box opened.";
     }
 
-    logWithExplorer("Open box підтверджено", tx.hash);
+    logWithExplorer("Box opened", tx.hash);
     await refreshAll();
   } catch (error) {
     hideOpenAnimation();
-    log(`Open box помилка: ${formatError(error)}`, "error");
+    log(`Open box error: ${formatError(error)}`, "error");
   }
 }
 
 async function handleMint(type) {
-  if (!state.contract) {
-    log("Підключи wallet і контракт перед mint.", "warn");
-    return;
-  }
+  if (!state.contract) return log("Connect wallet and contract first.", "warn");
 
   await refreshOnchainState();
 
@@ -376,22 +478,22 @@ async function handleMint(type) {
   let requiredText = "";
 
   if (type === "rare") {
-    if (state.rare < 5) return log("Потрібно 5 Rare кристалів.", "warn");
+    if (state.rare < 5) return log("Need 5 Rare crystals.", "warn");
     fn = "mintRobotWithRare";
     requiredText = "5 Rare";
   } else if (type === "epic") {
-    if (state.epic < 2) return log("Потрібно 2 Epic кристали.", "warn");
+    if (state.epic < 2) return log("Need 2 Epic crystals.", "warn");
     fn = "mintRobotWithEpic";
     requiredText = "2 Epic";
   } else {
-    if (state.legendary < 1) return log("Потрібно 1 Legendary кристал.", "warn");
+    if (state.legendary < 1) return log("Need 1 Legendary crystal.", "warn");
     fn = "mintRobotWithLegendary";
     requiredText = "1 Legendary";
   }
 
   try {
     const tx = await state.contract[fn]();
-    log(`Mint tx (${requiredText}) відправлено: ${tx.hash}`);
+    log(`Mint tx (${requiredText}) sent: ${tx.hash}`);
 
     const receipt = await tx.wait();
     const parsed = parseEvent(receipt.logs, "RobotMinted");
@@ -403,19 +505,17 @@ async function handleMint(type) {
         crystalNameLocal(Number(parsed.sourceCrystal)),
         Number(parsed.magnitude)
       );
-      el.mintState.textContent = `Minted Token #${parsed.tokenId.toString()}`;
+      el.mintState.textContent = `Minted token #${parsed.tokenId.toString()}`;
     } else {
       const tokenId = await getLatestTokenId();
-      if (tokenId) {
-        await hydrateMintFromToken(tokenId);
-      }
-      el.mintState.textContent = "NFT успішно замінчено.";
+      if (tokenId) await hydrateMintFromToken(tokenId);
+      el.mintState.textContent = "Mint success.";
     }
 
-    logWithExplorer("Mint підтверджено", tx.hash);
+    logWithExplorer("Mint confirmed", tx.hash);
     await refreshAll();
   } catch (error) {
-    log(`Mint помилка: ${formatError(error)}`, "error");
+    log(`Mint error: ${formatError(error)}`, "error");
   }
 }
 
@@ -428,7 +528,6 @@ function parseEvent(logs, eventName) {
       // ignore non-contract logs
     }
   }
-
   return null;
 }
 
@@ -446,7 +545,7 @@ async function hydrateMintFromToken(tokenId) {
     const meta = await state.contract.robotMeta(tokenId);
     setLatestMint(tokenId, Number(meta[0]), crystalNameLocal(Number(meta[1])), Number(meta[2]));
   } catch (error) {
-    log(`Не вдалося прочитати token meta: ${formatError(error)}`, "warn");
+    log(`Token read failed: ${formatError(error)}`, "warn");
   }
 }
 
@@ -458,14 +557,8 @@ function setLatestMint(tokenId, robotModel, sourceCrystal, magnitude) {
 }
 
 function updateCrystalPreview(crystalType) {
-  if (crystalType === CRYSTAL.RARE) {
-    setImageSafe(el.crystalPreview, images.rareCrystal, "RARE");
-    return;
-  }
-  if (crystalType === CRYSTAL.EPIC) {
-    setImageSafe(el.crystalPreview, images.epicCrystal || images.rareCrystal, "EPIC");
-    return;
-  }
+  if (crystalType === CRYSTAL.RARE) return setImageSafe(el.crystalPreview, images.rareCrystal, "RARE");
+  if (crystalType === CRYSTAL.EPIC) return setImageSafe(el.crystalPreview, images.epicCrystal || images.rareCrystal, "EPIC");
   setImageSafe(el.crystalPreview, images.legendaryCrystal || images.epicCrystal || images.rareCrystal, "LEGENDARY");
 }
 
@@ -482,6 +575,9 @@ function updateUi() {
   const canCheckInNow = getCanCheckInNow();
   const enoughBalance = state.walletBalanceWei >= state.checkInFeeWei;
 
+  el.switchWalletBtn.disabled = !connected;
+  el.disconnectBtn.disabled = !connected;
+
   el.checkInBtn.disabled = !connected || !contractReady || !canCheckInNow || !enoughBalance;
   el.openBoxBtn.disabled = !connected || !contractReady || state.boxBalance < 1;
 
@@ -490,27 +586,26 @@ function updateUi() {
   el.mintLegendBtn.disabled = !connected || !contractReady || state.legendary < 1;
 
   if (!connected) {
-    el.contractState.textContent = "Підключи wallet для старту.";
-    el.payHintText.textContent = "Підключи wallet, щоб забрати check-in.";
+    el.payHintText.textContent = "Connect wallet to start.";
     return;
   }
 
   if (!contractReady) {
-    el.payHintText.textContent = "Вкажи адресу контракту в config.js.";
+    el.payHintText.textContent = "Set contractAddress in config.js.";
     return;
   }
 
   if (!canCheckInNow) {
-    el.payHintText.textContent = "Check-in доступний раз на 24 години.";
+    el.payHintText.textContent = "Check-in available once per 24h.";
     return;
   }
 
   if (!enoughBalance) {
-    el.payHintText.textContent = "Недостатньо SEIS для check-in. Використай Faucet.";
+    el.payHintText.textContent = "Not enough SEIS for check-in. Use faucet.";
     return;
   }
 
-  el.payHintText.textContent = "Check-in доступний: після оплати отримаєш 1 box.";
+  el.payHintText.textContent = "Check-in is available now.";
 }
 
 async function playOpenAnimation(minDurationMs = 2500) {
@@ -518,20 +613,18 @@ async function playOpenAnimation(minDurationMs = 2500) {
 
   const start = Date.now();
   const video = el.boxOpenVideo;
+
   if (videos.boxOpenVideo) {
     try {
       video.currentTime = 0;
       await video.play();
     } catch {
-      // fallback to timer only
+      // timer fallback
     }
   }
 
-  const elapsed = Date.now() - start;
-  const remaining = Math.max(0, minDurationMs - elapsed);
-  if (remaining > 0) {
-    await wait(remaining);
-  }
+  const remaining = Math.max(0, minDurationMs - (Date.now() - start));
+  if (remaining > 0) await wait(remaining);
 
   hideOpenAnimation();
 }
@@ -609,6 +702,6 @@ function setImageSafe(target, src, label) {
 }
 
 function fallbackImage(label) {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="100%" height="100%" fill="#10263d"/><text x="50%" y="50%" fill="#e7f4ff" font-family="monospace" font-size="24" text-anchor="middle" dominant-baseline="middle">${label}</text></svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="100%" height="100%" fill="#1a1231"/><text x="50%" y="50%" fill="#f6ecff" font-family="monospace" font-size="24" text-anchor="middle" dominant-baseline="middle">${label}</text></svg>`;
   return `data:image/svg+xml;base64,${btoa(svg)}`;
 }

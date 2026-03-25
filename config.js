@@ -14,7 +14,7 @@
   faucetUrl: "https://community-faucet.seismictest.net/",
 
   // Set deployed contract address here.
-  contractAddress: "0x6BF9a43fAE91614FeEdBf3c50A6b32c5a20E7081",
+  contractAddress: "0xFc4196e80CB6f2a2b2DbC99C50feE2E83B16Df15",
 
   // Optional local images (you said you will add them).
   assetImages: {

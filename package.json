@@ -2,8 +2,10 @@
   "name": "seismic-avatar-nft",
   "version": "1.0.0",
   "description": "Frontend + Solidity contract for Seismic Testnet (EVM L1, chainId `5124`).",
-  "main": "app.js",
+  "main": "server.js",
   "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

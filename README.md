@@ -36,12 +36,16 @@ Frontend + Solidity contract for Seismic Testnet (EVM L1, chainId `5124`).
 1. Deploy contract from `contracts/SeismicAvatarMagnitudeNFT.sol`.
 2. Put deployed address into `config.js` (`contractAddress`).
 3. Add images into `assets/` (optional but recommended).
-4. Run static server:
+4. Run app server:
 
 ```powershell
 cd J:\seismic-avatar-nft
-npx serve .
+npm start
 ```
 
 5. Open URL, connect wallet, do daily check-ins, open boxes, mint robots.
+
+## Deploy note
+- Do **not** run `node app.js` (this is browser code).
+- Use `npm start`, which runs `server.js` and serves static files.
 

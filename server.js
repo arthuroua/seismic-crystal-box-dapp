@@ -4,6 +4,7 @@ const path = require("path");
 
 const root = __dirname;
 const port = Number(process.env.PORT || 8080);
+const host = "0.0.0.0";
 
 const types = {
   ".html": "text/html; charset=utf-8",
@@ -61,6 +62,6 @@ http
       fs.createReadStream(filePath).pipe(res);
     });
   })
-  .listen(port, () => {
-    console.log(`Seismic dApp server running on port ${port}`);
+  .listen(port, host, () => {
+    console.log(`Seismic dApp server running on ${host}:${port}`);
   });

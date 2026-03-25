@@ -251,8 +251,8 @@ contract SeismicCrystalRobotNFT is ERC721Enumerable, Ownable {
     // Not cryptographically secure randomness, enough for testnet game flow.
     function _rollCrystalRarity(uint256 seedValue) internal pure returns (uint8) {
         uint256 roll = seedValue % 1000;
-        if (roll < 720) return CRYSTAL_RARE; // 72%
-        if (roll < 950) return CRYSTAL_EPIC; // 23%
+        if (roll < 800) return CRYSTAL_RARE; // 80%
+        if (roll < 950) return CRYSTAL_EPIC; // 15%
         return CRYSTAL_LEGENDARY; // 5%
     }
 

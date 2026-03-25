@@ -41,6 +41,7 @@ contract SeismicCrystalRobotNFT is ERC721Enumerable, Ownable {
 
     mapping(address => uint64) public lastCheckInAt;
     mapping(address => uint32) public boxBalance;
+    mapping(address => bool) public unlimitedCheckIn;
     mapping(address => CrystalWallet) private _crystals;
     mapping(uint256 => RobotMeta) public robotMeta;
 
@@ -56,6 +57,7 @@ contract SeismicCrystalRobotNFT is ERC721Enumerable, Ownable {
     event CheckInFeeUpdated(uint256 oldFee, uint256 newFee);
     event FeeReceiverUpdated(address indexed oldReceiver, address indexed newReceiver);
     event NftImageURIUpdated(string oldURI, string newURI);
+    event UnlimitedCheckInUpdated(address indexed user, bool allowed);
 
     error ZeroAddress();
     error CheckInCooldown(uint64 nextAllowedAt);
@@ -78,8 +80,9 @@ contract SeismicCrystalRobotNFT is ERC721Enumerable, Ownable {
     function checkIn() external payable {
         uint64 nowTs = uint64(block.timestamp);
         uint64 last = lastCheckInAt[msg.sender];
+        bool isUnlimited = unlimitedCheckIn[msg.sender];
 
-        if (last != 0 && nowTs < last + CHECKIN_COOLDOWN) {
+        if (!isUnlimited && last != 0 && nowTs < last + CHECKIN_COOLDOWN) {
             revert CheckInCooldown(last + CHECKIN_COOLDOWN);
         }
         if (msg.value < checkInFeeWei) revert InsufficientFee();
@@ -90,7 +93,8 @@ contract SeismicCrystalRobotNFT is ERC721Enumerable, Ownable {
         (bool ok,) = feeReceiver.call{value: msg.value}("");
         if (!ok) revert FeeTransferFailed();
 
-        emit CheckIn(msg.sender, msg.value, nowTs + CHECKIN_COOLDOWN, boxBalance[msg.sender]);
+        uint64 nextAllowed = isUnlimited ? nowTs : nowTs + CHECKIN_COOLDOWN;
+        emit CheckIn(msg.sender, msg.value, nextAllowed, boxBalance[msg.sender]);
     }
 
     function openBox() external returns (uint8 crystalRarity) {
@@ -135,6 +139,9 @@ contract SeismicCrystalRobotNFT is ERC721Enumerable, Ownable {
         lastCheckIn = lastCheckInAt[user];
 
         if (lastCheckIn == 0) {
+            nextCheckIn = uint64(block.timestamp);
+            canCheckIn = true;
+        } else if (unlimitedCheckIn[user]) {
             nextCheckIn = uint64(block.timestamp);
             canCheckIn = true;
         } else {
@@ -203,6 +210,12 @@ contract SeismicCrystalRobotNFT is ERC721Enumerable, Ownable {
         string memory old = nftImageURI;
         nftImageURI = newURI;
         emit NftImageURIUpdated(old, newURI);
+    }
+
+    function setUnlimitedCheckIn(address user, bool allowed) external onlyOwner {
+        if (user == address(0)) revert ZeroAddress();
+        unlimitedCheckIn[user] = allowed;
+        emit UnlimitedCheckInUpdated(user, allowed);
     }
 
     function _mintRobot(address user, uint8 crystalType, uint8 requiredAmount) internal returns (uint256 tokenId) {

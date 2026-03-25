@@ -27,7 +27,127 @@ const CRYSTAL = {
   LEGENDARY: 3
 };
 
+const I18N = {
+  uk: {
+    heroTitle: "Crystal Box -> Seismic Robot NFT",
+    heroSubtitle:
+      "1 бокс на день після check-in. З бокса падає кристал Rare/Epic/Legendary. Для мінту робота потрібно: 5 Rare або 2 Epic або 1 Legendary.",
+    walletSectionTitle: "1) Гаманець",
+    checkinSectionTitle: "2) Щоденний Check-In",
+    openSectionTitle: "3) Відкрити Бокс",
+    mintSectionTitle: "4) Мінт Robot NFT",
+    activityTitle: "Активність",
+    connectWallet: "Підключити гаманець",
+    connectRabby: "Підключити Rabby",
+    switchWallet: "Змінити гаманець",
+    disconnect: "Відключити",
+    addNetwork: "Додати Seismic Network",
+    dailyCheckIn: "Щоденний Check-in (+1 Box)",
+    openBox: "Відкрити бокс",
+    mintRare: "Мінт за 5 Rare",
+    mintEpic: "Мінт за 2 Epic",
+    mintLegendary: "Мінт за 1 Legendary",
+    provider: "Провайдер",
+    wallet: "Гаманець",
+    walletNotConnected: "Гаманець не підключено",
+    balance: "Баланс",
+    txCount: "К-сть транзакцій",
+    yourNfts: "Твої NFT",
+    contract: "Контракт",
+    nextCheckin: "Наступний check-in",
+    checkinFee: "Комісія check-in",
+    boxes: "Бокси",
+    ready: "ГОТОВО",
+    availableNow: "доступно зараз",
+    connectToStart: "Підключи гаманець для старту.",
+    setContractInConfig: "Вкажи contractAddress у config.js.",
+    once24h: "Check-in доступний раз на 24 години.",
+    notEnoughSeis: "Недостатньо SEIS для check-in. Використай faucet.",
+    checkinAvailable: "Check-in доступний зараз.",
+    noBoxYet: "Ще немає бокса. Зроби щоденний check-in.",
+    boxReady: "Бокс готовий.",
+    lastCrystal: "Останній кристал",
+    rare: "Rare",
+    epic: "Epic",
+    legendary: "Legendary",
+    token: "Токен",
+    robot: "Робот",
+    sourceCrystal: "Кристал-джерело",
+    magnitude: "Магнітуда",
+    drop: "Випало",
+    boxOpened: "Бокс відкрито.",
+    openingBox: "Відкриття бокса...",
+    crystalDrop: "Випадіння кристала...",
+    close: "Закрити",
+    wrongNetwork: "Невірна мережа",
+    seismicOk: "Seismic OK"
+  },
+  en: {
+    heroTitle: "Crystal Box -> Seismic Robot NFT",
+    heroSubtitle:
+      "1 box per day after check-in. The box drops a Rare/Epic/Legendary crystal. To mint a robot: 5 Rare or 2 Epic or 1 Legendary.",
+    walletSectionTitle: "1) Wallet",
+    checkinSectionTitle: "2) Daily Check-In",
+    openSectionTitle: "3) Open Box",
+    mintSectionTitle: "4) Mint Robot NFT",
+    activityTitle: "Activity",
+    connectWallet: "Connect Wallet",
+    connectRabby: "Connect Rabby",
+    switchWallet: "Switch Wallet",
+    disconnect: "Disconnect",
+    addNetwork: "Add Seismic Network",
+    dailyCheckIn: "Daily Check-in (+1 Box)",
+    openBox: "Open Box",
+    mintRare: "Mint for 5 Rare",
+    mintEpic: "Mint for 2 Epic",
+    mintLegendary: "Mint for 1 Legendary",
+    provider: "Provider",
+    wallet: "Wallet",
+    walletNotConnected: "Wallet not connected",
+    balance: "Balance",
+    txCount: "Tx count",
+    yourNfts: "Your NFTs",
+    contract: "Contract",
+    nextCheckin: "Next check-in",
+    checkinFee: "Check-in fee",
+    boxes: "Boxes",
+    ready: "READY",
+    availableNow: "available now",
+    connectToStart: "Connect wallet to start.",
+    setContractInConfig: "Set contractAddress in config.js.",
+    once24h: "Check-in available once per 24h.",
+    notEnoughSeis: "Not enough SEIS for check-in. Use faucet.",
+    checkinAvailable: "Check-in is available now.",
+    noBoxYet: "No box yet. Do daily check-in.",
+    boxReady: "Box is ready.",
+    lastCrystal: "Last crystal",
+    rare: "Rare",
+    epic: "Epic",
+    legendary: "Legendary",
+    token: "Token",
+    robot: "Robot",
+    sourceCrystal: "Source crystal",
+    magnitude: "Magnitude",
+    drop: "Drop",
+    boxOpened: "Box opened.",
+    openingBox: "Opening Box...",
+    crystalDrop: "Crystal Drop...",
+    close: "Close",
+    wrongNetwork: "Wrong chain",
+    seismicOk: "Seismic OK"
+  }
+};
+
 const el = {
+  langUkBtn: document.getElementById("langUkBtn"),
+  langEnBtn: document.getElementById("langEnBtn"),
+  heroTitle: document.getElementById("heroTitle"),
+  heroSubtitle: document.getElementById("heroSubtitle"),
+  walletSectionTitle: document.getElementById("walletSectionTitle"),
+  checkinSectionTitle: document.getElementById("checkinSectionTitle"),
+  openSectionTitle: document.getElementById("openSectionTitle"),
+  mintSectionTitle: document.getElementById("mintSectionTitle"),
+  activityTitle: document.getElementById("activityTitle"),
   connectBtn: document.getElementById("connectBtn"),
   connectRabbyBtn: document.getElementById("connectRabbyBtn"),
   switchWalletBtn: document.getElementById("switchWalletBtn"),
@@ -76,6 +196,7 @@ const el = {
   dropVideo: document.getElementById("dropVideo"),
   dropCaption: document.getElementById("dropCaption"),
   dropAnimCloseBtn: document.getElementById("dropAnimCloseBtn"),
+  openCaption: document.getElementById("openCaption"),
 
   explorerLink: document.getElementById("explorerLink"),
   faucetLink: document.getElementById("faucetLink"),
@@ -100,7 +221,8 @@ const state = {
   rare: 0,
   epic: 0,
   legendary: 0,
-  timerId: null
+  timerId: null,
+  locale: localStorage.getItem("seismic_locale") === "en" ? "en" : "uk"
 };
 
 init();
@@ -118,13 +240,16 @@ function init() {
   }
 
   bindEvents();
+  applyLocale();
   startTimer();
   updateUi();
 
-  log("Ready. Connect wallet to start.");
+  log(tr("connectToStart"));
 }
 
 function bindEvents() {
+  el.langUkBtn?.addEventListener("click", () => setLocale("uk"));
+  el.langEnBtn?.addEventListener("click", () => setLocale("en"));
   el.connectBtn.addEventListener("click", () => connectWallet("default"));
   el.connectRabbyBtn.addEventListener("click", () => connectWallet("rabby"));
   el.switchWalletBtn.addEventListener("click", switchWalletAccount);
@@ -138,6 +263,79 @@ function bindEvents() {
   el.mintLegendBtn.addEventListener("click", () => handleMint("legendary"));
   el.openAnimCloseBtn?.addEventListener("click", hideOpenAnimation);
   el.dropAnimCloseBtn?.addEventListener("click", hideDropAnimation);
+}
+
+function tr(key) {
+  return I18N[state.locale]?.[key] || I18N.en[key] || key;
+}
+
+function setLocale(locale) {
+  state.locale = locale === "en" ? "en" : "uk";
+  localStorage.setItem("seismic_locale", state.locale);
+  applyLocale();
+  renderCountdown();
+  updateUi();
+}
+
+function applyLocale() {
+  el.heroTitle.textContent = tr("heroTitle");
+  el.heroSubtitle.textContent = tr("heroSubtitle");
+  el.walletSectionTitle.textContent = tr("walletSectionTitle");
+  el.checkinSectionTitle.textContent = tr("checkinSectionTitle");
+  el.openSectionTitle.textContent = tr("openSectionTitle");
+  el.mintSectionTitle.textContent = tr("mintSectionTitle");
+  el.activityTitle.textContent = tr("activityTitle");
+
+  el.connectBtn.textContent = tr("connectWallet");
+  el.connectRabbyBtn.textContent = tr("connectRabby");
+  el.switchWalletBtn.textContent = tr("switchWallet");
+  el.disconnectBtn.textContent = tr("disconnect");
+  el.addNetworkBtn.textContent = tr("addNetwork");
+  el.checkInBtn.textContent = tr("dailyCheckIn");
+  el.openBoxBtn.textContent = tr("openBox");
+  el.mintRareBtn.textContent = tr("mintRare");
+  el.mintEpicBtn.textContent = tr("mintEpic");
+  el.mintLegendBtn.textContent = tr("mintLegendary");
+  el.openCaption.textContent = tr("openingBox");
+  el.dropCaption.textContent = tr("crystalDrop");
+  el.openAnimCloseBtn.textContent = tr("close");
+  el.dropAnimCloseBtn.textContent = tr("close");
+
+  el.langUkBtn?.classList.toggle("active", state.locale === "uk");
+  el.langEnBtn?.classList.toggle("active", state.locale === "en");
+
+  if (!state.account) {
+    el.walletProviderText.textContent = `${tr("provider")}: -`;
+    el.walletState.textContent = tr("walletNotConnected");
+    el.walletBalanceText.textContent = `${tr("balance")}: -`;
+    el.walletTxCountText.textContent = `${tr("txCount")}: -`;
+    el.walletNftCountText.textContent = `${tr("yourNfts")}: -`;
+    el.contractState.textContent = `${tr("contract")}: -`;
+    el.feeText.textContent = `${tr("checkinFee")}: -`;
+    el.boxBalanceText.textContent = `${tr("boxes")}: 0`;
+    el.nextCheckInText.textContent = `${tr("nextCheckin")}: -`;
+    el.payHintText.textContent = tr("connectToStart");
+    el.lastCrystalType.textContent = `${tr("lastCrystal")}: -`;
+    el.rareCount.textContent = `${tr("rare")}: 0`;
+    el.epicCount.textContent = `${tr("epic")}: 0`;
+    el.legendaryCount.textContent = `${tr("legendary")}: 0`;
+    el.latestTokenId.textContent = `${tr("token")}: -`;
+    el.latestRobot.textContent = `${tr("robot")}: -`;
+    el.latestSource.textContent = `${tr("sourceCrystal")}: -`;
+    el.latestMagnitude.textContent = `${tr("magnitude")}: -`;
+    return;
+  }
+
+  el.walletProviderText.textContent = `${tr("provider")}: ${state.providerName || "-"}`;
+  el.walletState.textContent = `${tr("wallet")}: ${shortAddr(state.account)} | ${tr("seismicOk")}`;
+  el.walletBalanceText.textContent = `${tr("balance")}: ${formatSeis(state.walletBalanceWei)} SEIS`;
+  el.walletTxCountText.textContent = `${tr("txCount")}: ${state.walletTxCount ?? "-"}`;
+  el.walletNftCountText.textContent = `${tr("yourNfts")}: ${state.walletNftCount ?? "-"}`;
+  el.feeText.textContent = `${tr("checkinFee")}: ${state.checkInFeeWei > 0n ? `${formatSeis(state.checkInFeeWei)} SEIS` : "-"}`;
+  el.boxBalanceText.textContent = `${tr("boxes")}: ${state.boxBalance}`;
+  el.rareCount.textContent = `${tr("rare")}: ${state.rare}`;
+  el.epicCount.textContent = `${tr("epic")}: ${state.epic}`;
+  el.legendaryCount.textContent = `${tr("legendary")}: ${state.legendary}`;
 }
 
 function startTimer() {
@@ -266,29 +464,29 @@ async function connectWallet(mode = "default", silent = false) {
     const network = await state.provider.getNetwork();
     const chainId = Number(network.chainId);
 
-    el.walletProviderText.textContent = `Provider: ${state.providerName}`;
+    el.walletProviderText.textContent = `${tr("provider")}: ${state.providerName}`;
 
     if (chainId !== Number(cfg.chainIdDecimal)) {
-      el.walletState.textContent = `Wallet: ${shortAddr(state.account)} | Wrong chain: ${chainId}`;
-      el.walletBalanceText.textContent = "Balance: wrong network";
-      el.walletTxCountText.textContent = "Tx count: wrong network";
-      el.walletNftCountText.textContent = "Your NFTs: wrong network";
-      el.contractState.textContent = "Switch to Seismic Testnet.";
+      el.walletState.textContent = `${tr("wallet")}: ${shortAddr(state.account)} | ${tr("wrongNetwork")}: ${chainId}`;
+      el.walletBalanceText.textContent = `${tr("balance")}: ${tr("wrongNetwork")}`;
+      el.walletTxCountText.textContent = `${tr("txCount")}: ${tr("wrongNetwork")}`;
+      el.walletNftCountText.textContent = `${tr("yourNfts")}: ${tr("wrongNetwork")}`;
+      el.contractState.textContent = `Contract: ${tr("wrongNetwork")}`;
       updateUi();
       return;
     }
 
-    el.walletState.textContent = `Wallet: ${shortAddr(state.account)} | Seismic OK`;
+    el.walletState.textContent = `${tr("wallet")}: ${shortAddr(state.account)} | ${tr("seismicOk")}`;
 
     if (!isContractReady()) {
-      el.contractState.textContent = "Set contractAddress in config.js";
+      el.contractState.textContent = tr("setContractInConfig");
       await refreshWalletBalance();
       updateUi();
       return;
     }
 
     state.contract = new ethers.Contract(cfg.contractAddress, CONTRACT_ABI, state.signer);
-    el.contractState.textContent = `Contract: ${shortAddr(cfg.contractAddress)}`;
+    el.contractState.textContent = `${tr("contract")}: ${shortAddr(cfg.contractAddress)}`;
 
     await refreshAll();
     if (!silent) log(`Connected via ${state.providerName}.`);
@@ -359,21 +557,21 @@ function disconnectWallet() {
   state.epic = 0;
   state.legendary = 0;
 
-  el.walletProviderText.textContent = "Provider: -";
-  el.walletState.textContent = "Wallet not connected";
-  el.walletBalanceText.textContent = "Balance: -";
-  el.walletTxCountText.textContent = "Tx count: -";
-  el.walletNftCountText.textContent = "Your NFTs: -";
-  el.contractState.textContent = "Contract: -";
+  el.walletProviderText.textContent = `${tr("provider")}: -`;
+  el.walletState.textContent = tr("walletNotConnected");
+  el.walletBalanceText.textContent = `${tr("balance")}: -`;
+  el.walletTxCountText.textContent = `${tr("txCount")}: -`;
+  el.walletNftCountText.textContent = `${tr("yourNfts")}: -`;
+  el.contractState.textContent = `${tr("contract")}: -`;
   el.progressText.textContent = "00:00:00";
-  el.nextCheckInText.textContent = "Next check-in: -";
+  el.nextCheckInText.textContent = `${tr("nextCheckin")}: -`;
   el.progressBar.style.width = "0%";
-  el.feeText.textContent = "Check-in fee: -";
-  el.boxBalanceText.textContent = "Boxes: 0";
-  el.rareCount.textContent = "Rare: 0";
-  el.epicCount.textContent = "Epic: 0";
-  el.legendaryCount.textContent = "Legendary: 0";
-  el.payHintText.textContent = "Connect wallet to start.";
+  el.feeText.textContent = `${tr("checkinFee")}: -`;
+  el.boxBalanceText.textContent = `${tr("boxes")}: 0`;
+  el.rareCount.textContent = `${tr("rare")}: 0`;
+  el.epicCount.textContent = `${tr("epic")}: 0`;
+  el.legendaryCount.textContent = `${tr("legendary")}: 0`;
+  el.payHintText.textContent = tr("connectToStart");
 
   updateUi();
   log("Wallet disconnected (local session).", "warn");
@@ -414,14 +612,14 @@ async function refreshAll() {
 async function refreshWalletBalance() {
   if (!state.provider || !state.account) {
     state.walletBalanceWei = 0n;
-    el.walletBalanceText.textContent = "Balance: -";
+    el.walletBalanceText.textContent = `${tr("balance")}: -`;
     return;
   }
 
   try {
     const balance = await state.provider.getBalance(state.account);
     state.walletBalanceWei = balance;
-    el.walletBalanceText.textContent = `Balance: ${formatSeis(balance)} SEIS`;
+    el.walletBalanceText.textContent = `${tr("balance")}: ${formatSeis(balance)} SEIS`;
   } catch (error) {
     state.walletBalanceWei = 0n;
     log(`Balance read failed: ${formatError(error)}`, "warn");
@@ -432,32 +630,32 @@ async function refreshWalletStats() {
   if (!state.provider || !state.account) {
     state.walletTxCount = 0;
     state.walletNftCount = 0;
-    el.walletTxCountText.textContent = "Tx count: -";
-    el.walletNftCountText.textContent = "Your NFTs: -";
+    el.walletTxCountText.textContent = `${tr("txCount")}: -`;
+    el.walletNftCountText.textContent = `${tr("yourNfts")}: -`;
     return;
   }
 
   try {
     const txCount = await state.provider.getTransactionCount(state.account, "latest");
     state.walletTxCount = Number(txCount);
-    el.walletTxCountText.textContent = `Tx count: ${state.walletTxCount}`;
+    el.walletTxCountText.textContent = `${tr("txCount")}: ${state.walletTxCount}`;
   } catch (error) {
-    el.walletTxCountText.textContent = "Tx count: -";
+    el.walletTxCountText.textContent = `${tr("txCount")}: -`;
     log(`Tx count read failed: ${formatError(error)}`, "warn");
   }
 
   if (!state.contract) {
     state.walletNftCount = 0;
-    el.walletNftCountText.textContent = "Your NFTs: -";
+    el.walletNftCountText.textContent = `${tr("yourNfts")}: -`;
     return;
   }
 
   try {
     const nftCount = await state.contract.balanceOf(state.account);
     state.walletNftCount = Number(nftCount);
-    el.walletNftCountText.textContent = `Your NFTs: ${state.walletNftCount}`;
+    el.walletNftCountText.textContent = `${tr("yourNfts")}: ${state.walletNftCount}`;
   } catch (error) {
-    el.walletNftCountText.textContent = "Your NFTs: -";
+    el.walletNftCountText.textContent = `${tr("yourNfts")}: -`;
     log(`NFT count read failed: ${formatError(error)}`, "warn");
   }
 }
@@ -483,13 +681,13 @@ async function refreshOnchainState() {
     state.epic = Number(balances[1]);
     state.legendary = Number(balances[2]);
 
-    el.feeText.textContent = `Check-in fee: ${formatSeis(state.checkInFeeWei)} SEIS`;
-    el.boxBalanceText.textContent = `Boxes: ${state.boxBalance}`;
-    el.rareCount.textContent = `Rare: ${state.rare}`;
-    el.epicCount.textContent = `Epic: ${state.epic}`;
-    el.legendaryCount.textContent = `Legendary: ${state.legendary}`;
+    el.feeText.textContent = `${tr("checkinFee")}: ${formatSeis(state.checkInFeeWei)} SEIS`;
+    el.boxBalanceText.textContent = `${tr("boxes")}: ${state.boxBalance}`;
+    el.rareCount.textContent = `${tr("rare")}: ${state.rare}`;
+    el.epicCount.textContent = `${tr("epic")}: ${state.epic}`;
+    el.legendaryCount.textContent = `${tr("legendary")}: ${state.legendary}`;
 
-    el.openState.textContent = state.boxBalance > 0 ? "Box is ready." : "No box yet. Do daily check-in.";
+    el.openState.textContent = state.boxBalance > 0 ? tr("boxReady") : tr("noBoxYet");
   } catch (error) {
     state.canCheckIn = false;
     log(`Contract read failed: ${formatError(error)}`, "error");
@@ -503,14 +701,14 @@ function getCanCheckInNow() {
 function renderCountdown() {
   if (!state.account || !state.contract) {
     el.progressText.textContent = "00:00:00";
-    el.nextCheckInText.textContent = "Next check-in: -";
+    el.nextCheckInText.textContent = `${tr("nextCheckin")}: -`;
     el.progressBar.style.width = "0%";
     return;
   }
 
   if (getCanCheckInNow()) {
-    el.progressText.textContent = "READY";
-    el.nextCheckInText.textContent = "Next check-in: available now";
+    el.progressText.textContent = tr("ready");
+    el.nextCheckInText.textContent = `${tr("nextCheckin")}: ${tr("availableNow")}`;
     el.progressBar.style.width = "100%";
     return;
   }
@@ -519,10 +717,10 @@ function renderCountdown() {
   const remaining = Math.max(0, state.nextCheckInAt - nowTs);
   if (state.nextCheckInAt > nowTs) {
     el.progressText.textContent = formatHms(remaining);
-    el.nextCheckInText.textContent = `Next check-in: ${formatDateTime(state.nextCheckInAt)}`;
+    el.nextCheckInText.textContent = `${tr("nextCheckin")}: ${formatDateTime(state.nextCheckInAt)}`;
   } else {
     el.progressText.textContent = "WAIT";
-    el.nextCheckInText.textContent = "Next check-in: syncing...";
+    el.nextCheckInText.textContent = `${tr("nextCheckin")}: syncing...`;
   }
 
   const cooldown = Math.max(1, state.cooldownSeconds);
@@ -535,8 +733,8 @@ async function handleCheckIn() {
 
   await refreshAll();
 
-  if (!getCanCheckInNow()) return log("Check-in available once per 24h.", "warn");
-  if (state.walletBalanceWei < state.checkInFeeWei) return log("Not enough SEIS. Use faucet.", "warn");
+  if (!getCanCheckInNow()) return log(tr("once24h"), "warn");
+  if (state.walletBalanceWei < state.checkInFeeWei) return log(tr("notEnoughSeis"), "warn");
 
   try {
     log(`Confirm payment ${formatSeis(state.checkInFeeWei)} SEIS.`);
@@ -570,11 +768,11 @@ async function handleOpenBox() {
       const crystalType = Number(parsed.crystalRarity);
       const crystalName = crystalNameLocal(crystalType);
       updateCrystalPreview(crystalType);
-      el.lastCrystalType.textContent = `Last crystal: ${crystalName}`;
-      el.openState.textContent = `Drop: ${crystalName}`;
+      el.lastCrystalType.textContent = `${tr("lastCrystal")}: ${crystalName}`;
+      el.openState.textContent = `${tr("drop")}: ${crystalName}`;
       await playDropAnimation(crystalType, 6000);
     } else {
-      el.openState.textContent = "Box opened.";
+      el.openState.textContent = tr("boxOpened");
     }
 
     logWithExplorer("Box opened", tx.hash);
@@ -667,10 +865,10 @@ async function hydrateMintFromToken(tokenId) {
 }
 
 function setLatestMint(tokenId, robotModel, sourceCrystal, magnitude) {
-  el.latestTokenId.textContent = `Token: #${tokenId}`;
-  el.latestRobot.textContent = `Robot: #${robotModel}`;
-  el.latestSource.textContent = `Source crystal: ${sourceCrystal}`;
-  el.latestMagnitude.textContent = `Magnitude: ${magnitude}`;
+  el.latestTokenId.textContent = `${tr("token")}: #${tokenId}`;
+  el.latestRobot.textContent = `${tr("robot")}: #${robotModel}`;
+  el.latestSource.textContent = `${tr("sourceCrystal")}: ${sourceCrystal}`;
+  el.latestMagnitude.textContent = `${tr("magnitude")}: ${magnitude}`;
 }
 
 function updateCrystalPreview(crystalType) {
@@ -703,26 +901,26 @@ function updateUi() {
   el.mintLegendBtn.disabled = !connected || !contractReady || state.legendary < 1;
 
   if (!connected) {
-    el.payHintText.textContent = "Connect wallet to start.";
+    el.payHintText.textContent = tr("connectToStart");
     return;
   }
 
   if (!contractReady) {
-    el.payHintText.textContent = "Set contractAddress in config.js.";
+    el.payHintText.textContent = tr("setContractInConfig");
     return;
   }
 
   if (!canCheckInNow) {
-    el.payHintText.textContent = "Check-in available once per 24h.";
+    el.payHintText.textContent = tr("once24h");
     return;
   }
 
   if (!enoughBalance) {
-    el.payHintText.textContent = "Not enough SEIS for check-in. Use faucet.";
+    el.payHintText.textContent = tr("notEnoughSeis");
     return;
   }
 
-  el.payHintText.textContent = "Check-in is available now.";
+  el.payHintText.textContent = tr("checkinAvailable");
 }
 
 async function playOpenAnimation(minDurationMs = 2500) {
@@ -767,7 +965,7 @@ async function playDropAnimation(crystalType, minDurationMs = 6000) {
   const crystalName = crystalNameLocal(crystalType);
   const videoSrc = dropVideoByCrystal(crystalType);
 
-  el.dropCaption.textContent = `Drop: ${crystalName}`;
+  el.dropCaption.textContent = `${tr("drop")}: ${crystalName}`;
   el.dropAnimModal.classList.add("active");
 
   const start = Date.now();

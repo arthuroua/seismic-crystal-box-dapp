@@ -19,9 +19,13 @@
 
     <main class="container">
       <section class="hero glass">
+        <div class="lang-switch">
+          <button id="langUkBtn" class="btn btn-secondary lang-btn" type="button">UA</button>
+          <button id="langEnBtn" class="btn btn-secondary lang-btn" type="button">EN</button>
+        </div>
         <p class="chip">Seismic Testnet В· Chain ID 5124</p>
-        <h1>Crystal Box -> Seismic Robot NFT</h1>
-        <p class="subtitle">
+        <h1 id="heroTitle">Crystal Box -> Seismic Robot NFT</h1>
+        <p id="heroSubtitle" class="subtitle">
           1 box РЅР° РґРµРЅСЊ РїС–СЃР»СЏ check-in. Р— Р±РѕРєСЃР° РїР°РґР°С” РєСЂРёСЃС‚Р°Р» Rare/Epic/Legendary.
           Р”Р»СЏ РјС–РЅС‚Сѓ СЂРѕР±РѕС‚Р° РїРѕС‚СЂС–Р±РЅРѕ: 5 Rare Р°Р±Рѕ 2 Epic Р°Р±Рѕ 1 Legendary.
         </p>
@@ -33,7 +37,7 @@
 
       <section class="grid">
         <article class="panel glass">
-          <h2>1) Wallet</h2>
+          <h2 id="walletSectionTitle">1) Wallet</h2>
           <div class="wallet-grid">
             <button id="connectBtn" class="btn">Connect Wallet</button>
             <button id="connectRabbyBtn" class="btn btn-rabby">Connect Rabby</button>
@@ -50,7 +54,7 @@
         </article>
 
         <article class="panel glass">
-          <h2>2) Daily Check-In</h2>
+          <h2 id="checkinSectionTitle">2) Daily Check-In</h2>
           <div class="progress-wrap">
             <div id="progressBar" class="progress-bar"></div>
           </div>
@@ -63,7 +67,7 @@
         </article>
 
         <article class="panel panel-preview glass">
-          <h2>3) Open Box</h2>
+          <h2 id="openSectionTitle">3) Open Box</h2>
           <div class="box-stage">
             <img id="boxImage" alt="Seismic Box" class="box-image" />
           </div>
@@ -81,7 +85,7 @@
         </article>
 
         <article class="panel panel-preview glass">
-          <h2>4) Mint Robot NFT</h2>
+          <h2 id="mintSectionTitle">4) Mint Robot NFT</h2>
           <div class="mint-grid">
             <button id="mintRareBtn" class="btn">Mint for 5 Rare</button>
             <button id="mintEpicBtn" class="btn">Mint for 2 Epic</button>
@@ -101,7 +105,7 @@
       </section>
 
       <section class="glass logs">
-        <h2>Activity</h2>
+        <h2 id="activityTitle">Activity</h2>
         <div id="logBox" class="log-box"></div>
       </section>
     </main>
@@ -109,7 +113,7 @@
     <div id="openAnimModal" class="open-modal">
       <div class="open-modal-content glass">
         <video id="boxOpenVideo" class="open-video" muted playsinline preload="auto"></video>
-        <div class="modal-head"><p class="open-caption">Opening Box...</p><button id="openAnimCloseBtn" class="btn btn-secondary modal-close" type="button">Close</button></div>
+        <div class="modal-head"><p id="openCaption" class="open-caption">Opening Box...</p><button id="openAnimCloseBtn" class="btn btn-secondary modal-close" type="button">Close</button></div>
       </div>
     </div>
     <div id="dropAnimModal" class="open-modal">

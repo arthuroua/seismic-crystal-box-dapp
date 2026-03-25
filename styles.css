@@ -107,6 +107,25 @@ body {
 .hero {
   padding: 28px;
   animation: reveal 650ms ease-out;
+  position: relative;
+}
+
+.lang-switch {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: flex;
+  gap: 8px;
+}
+
+.lang-btn {
+  min-width: 56px;
+  padding: 7px 10px;
+}
+
+.lang-btn.active {
+  border-color: rgba(255, 183, 76, 0.8);
+  box-shadow: 0 0 0 2px rgba(255, 183, 76, 0.2) inset;
 }
 
 @keyframes reveal {

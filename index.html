@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Seismic Crystal Box</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="bg-orb orb-a"></div>
+    <div class="bg-orb orb-b"></div>
+
+    <main class="container">
+      <section class="hero glass">
+        <p class="chip">Seismic Testnet · Chain ID 5124</p>
+        <h1>Crystal Box -> Seismic Robot NFT</h1>
+        <p class="subtitle">
+          1 box в день після check-in. З бокса падає кристал Rare/Epic/Legendary. Для мінту
+          робота потрібно: 5 Rare або 2 Epic або 1 Legendary.
+        </p>
+        <div class="hero-links">
+          <a id="explorerLink" href="#" target="_blank" rel="noreferrer">Explorer</a>
+          <a id="faucetLink" href="#" target="_blank" rel="noreferrer">Faucet</a>
+        </div>
+      </section>
+
+      <section class="grid">
+        <article class="panel glass">
+          <h2>1) Підключення</h2>
+          <button id="connectBtn" class="btn">Connect Wallet</button>
+          <button id="addNetworkBtn" class="btn btn-secondary">Add Seismic Network</button>
+          <p id="walletState" class="muted">Wallet не підключений</p>
+          <p id="walletBalanceText" class="muted">Balance: -</p>
+          <p id="contractState" class="muted">Contract: -</p>
+        </article>
+
+        <article class="panel glass">
+          <h2>2) Daily Check-In</h2>
+          <div class="progress-wrap">
+            <div id="progressBar" class="progress-bar"></div>
+          </div>
+          <p id="progressText" class="progress-text">00:00:00</p>
+          <p id="nextCheckInText" class="muted">Next check-in: -</p>
+          <p id="feeText" class="muted">Check-in fee: -</p>
+          <p id="boxBalanceText" class="muted">Boxes: 0</p>
+          <p id="payHintText" class="muted">Підключи wallet, щоб забрати check-in.</p>
+          <button id="checkInBtn" class="btn">Daily Check-in (+1 Box)</button>
+        </article>
+
+        <article class="panel panel-preview glass">
+          <h2>3) Відкрити Box</h2>
+          <div class="box-stage">
+            <img id="boxImage" alt="Seismic Box" class="box-image" />
+          </div>
+          <div class="preview-card robo-preview">
+            <img id="crystalPreview" alt="Crystal" class="drop-image" />
+            <div class="preview-meta">
+              <p id="lastCrystalType">Last crystal: -</p>
+              <p id="rareCount">Rare: 0</p>
+              <p id="epicCount">Epic: 0</p>
+              <p id="legendaryCount">Legendary: 0</p>
+            </div>
+          </div>
+          <button id="openBoxBtn" class="btn btn-primary">Open Box</button>
+          <p id="openState" class="muted"></p>
+        </article>
+
+        <article class="panel panel-preview glass">
+          <h2>4) Mint Robot NFT</h2>
+          <div class="mint-grid">
+            <button id="mintRareBtn" class="btn">Mint for 5 Rare</button>
+            <button id="mintEpicBtn" class="btn">Mint for 2 Epic</button>
+            <button id="mintLegendBtn" class="btn btn-primary">Mint for 1 Legendary</button>
+          </div>
+          <img id="nftPreview" alt="Seismic Robot NFT" class="nft-image" />
+          <p id="mintState" class="muted"></p>
+          <div class="preview-card robo-preview robo-preview-single">
+            <div class="preview-meta">
+              <p id="latestTokenId">Token: -</p>
+              <p id="latestRobot">Robot: -</p>
+              <p id="latestSource">Source crystal: -</p>
+              <p id="latestMagnitude">Magnitude: -</p>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="glass logs">
+        <h2>Activity</h2>
+        <div id="logBox" class="log-box"></div>
+      </section>
+    </main>
+
+    <div id="openAnimModal" class="open-modal">
+      <div class="open-modal-content glass">
+        <video id="boxOpenVideo" class="open-video" muted playsinline preload="auto"></video>
+        <p class="open-caption">Opening Box...</p>
+      </div>
+    </div>
+
+    <script src="./config.js"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

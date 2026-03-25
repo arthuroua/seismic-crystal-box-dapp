@@ -1,0 +1,20 @@
+{
+  "name": "seismic-avatar-nft",
+  "version": "1.0.0",
+  "description": "Frontend + Solidity contract for Seismic Testnet (EVM L1, chainId `5124`).",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "hardhat": "^2.22.15"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.2",
+    "ethers": "^6.16.0"
+  }
+}

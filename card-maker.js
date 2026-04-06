@@ -108,8 +108,8 @@
 
     // Align text to the center of dark torso slots.
     drawField(data.nick, 710, 430, 250, textColor, strokeColor);
-    drawField(data.country, 710, 532, 250, textColor, strokeColor);
-    drawField(String(data.messages), 710, 617, 250, textColor, strokeColor);
+    drawField(data.country, 710, 528, 250, textColor, strokeColor);
+    drawField(String(data.messages), 710, 612, 250, textColor, strokeColor);
   }
 
   function drawField(text, x, y, maxWidth, color, strokeColor) {
@@ -265,11 +265,12 @@
     const octx = off.getContext("2d");
 
     octx.drawImage(crystalCutoutImage, 0, 0, crystalCutoutImage.width, crystalCutoutImage.height, 0, 0, w, h);
+    removeNeutralBackground(octx, w, h);
 
     if (magnitude !== 9) {
       tintCrystalOnLayer(octx, magnitude, w, h);
     }
-    drawCrystalTopNumber(octx, size, magnitude, targetW, targetH);
+    drawCrystalTopNumber(octx, magnitude, w, h);
     return off;
   }
 
@@ -287,27 +288,47 @@
     octx.restore();
   }
 
-  function drawCrystalTopNumber(octx, size, magnitude, targetW, targetH) {
-    const sx = targetW / Math.max(1, octx.canvas.width);
-    const sy = targetH / Math.max(1, octx.canvas.height);
-    const cx = (size * 0.1 + targetW / 2) / sx;
-    const cy = (-size * 0.66 + targetH) / sy;
-    const r = (size * 0.28) / ((sx + sy) / 2);
+  function drawCrystalTopNumber(octx, magnitude, w, h) {
+    const cx = w * 0.53;
+    const cy = h * 0.16;
+    const r = h * 0.115;
     const color = MAG_COLORS[magnitude] || "#58c7ff";
 
     octx.beginPath();
     polygonPathCtx(octx, cx, cy, r, 6, -Math.PI / 2);
     octx.fillStyle = shade(color, 1.08);
     octx.fill();
-    octx.lineWidth = Math.max(2, (size * 0.06) / ((sx + sy) / 2));
+    octx.lineWidth = Math.max(2, h * 0.03);
     octx.strokeStyle = "rgba(20, 34, 50, 0.62)";
     octx.stroke();
 
     octx.fillStyle = "rgba(18, 28, 42, 0.86)";
-    octx.font = `700 ${Math.max(16, size * 0.33)}px 'Bebas Neue', sans-serif`;
+    octx.font = `700 ${Math.max(18, h * 0.16)}px 'Bebas Neue', sans-serif`;
     octx.textAlign = "center";
     octx.textBaseline = "middle";
-    octx.fillText(String(magnitude), cx, cy + size * 0.01);
+    octx.fillText(String(magnitude), cx, cy + h * 0.006);
+  }
+
+  function removeNeutralBackground(octx, w, h) {
+    const img = octx.getImageData(0, 0, w, h);
+    const px = img.data;
+    for (let i = 0; i < px.length; i += 4) {
+      const a = px[i + 3];
+      if (!a) continue;
+      const r = px[i] / 255;
+      const g = px[i + 1] / 255;
+      const b = px[i + 2] / 255;
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      const sat = max === 0 ? 0 : (max - min) / max;
+      const lum = (max + min) * 0.5;
+
+      // Remove light/neutral background tones while keeping saturated crystal pixels.
+      if ((sat < 0.18 && lum > 0.32) || (sat < 0.1 && lum > 0.2)) {
+        px[i + 3] = 0;
+      }
+    }
+    octx.putImageData(img, 0, 0);
   }
 
   function polygonPath(cx, cy, radius, sides, rotation) {

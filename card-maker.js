@@ -177,19 +177,7 @@
 
     ctx.save();
     ctx.translate(x, y);
-    ctx.rotate(-0.08);
-
-    // Soft emissive glow around badge.
-    const glowColor = MAG_COLORS[magnitude] || "#56ccff";
-    ctx.beginPath();
-    ctx.ellipse(0, -size * 0.12, size * 0.56, size * 0.82, 0, 0, Math.PI * 2);
-    ctx.fillStyle = glowColor;
-    ctx.globalAlpha = 0.14;
-    ctx.shadowColor = glowColor;
-    ctx.shadowBlur = 26;
-    ctx.fill();
-    ctx.globalAlpha = 1;
-    ctx.shadowBlur = 0;
+    ctx.rotate(0);
 
     const rendered = renderCrystalLayer(magnitude, targetW, targetH, size);
     ctx.drawImage(rendered, dx, dy, targetW, targetH);
@@ -352,7 +340,8 @@
   function applyCrystalShine(octx, magnitude, w, h) {
     const color = MAG_COLORS[magnitude] || "#58c7ff";
     octx.save();
-    octx.globalCompositeOperation = "screen";
+    // Important: keep all shine inside existing crystal pixels only.
+    octx.globalCompositeOperation = "source-atop";
 
     // Global glossy lift.
     const gloss = octx.createLinearGradient(0, 0, w, h);
@@ -392,9 +381,6 @@
     }
 
     octx.restore();
-    // Keep shine strictly within crystal silhouette.
-    octx.globalCompositeOperation = "source-atop";
-    octx.globalCompositeOperation = "source-over";
   }
 
   function stripEdgeByCornerDistance(octx, w, h, threshold) {

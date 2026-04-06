@@ -79,6 +79,36 @@ select {
   margin-top: 4px;
 }
 
+.legend p {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.legend-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.m-chip {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 0.78rem;
+  color: #f7f2ff;
+}
+
+.m1 { background: #e8d27a; color: #37260f; }
+.m2 { background: #62c6a8; color: #123b33; }
+.m3 { background: #38d760; color: #10371c; }
+.m4 { background: #9bea53; color: #20360f; }
+.m5 { background: #a8b600; color: #2f300b; }
+.m6 { background: #e6c218; color: #372b0f; }
+.m7 { background: #ff7a00; color: #3f1f08; }
+.m8 { background: #ff1b17; color: #3c0e0d; }
+.m9 { background: #19c9f3; color: #073646; }
+
 .actions {
   margin-top: 14px;
   display: grid;

@@ -5,11 +5,11 @@
 
   const MAG_COLORS = {
     1: "#E8D27A",
-    2: "#69C7AE",
-    3: "#37D66D",
-    4: "#A8E76D",
-    5: "#A6B400",
-    6: "#E7C21F",
+    2: "#62C6A8",
+    3: "#38D760",
+    4: "#9BEA53",
+    5: "#A8B600",
+    6: "#E6C218",
     7: "#FF7A00",
     8: "#FF1B17",
     9: "#19C9F3"
@@ -117,55 +117,124 @@
   }
 
   function drawCrystal(magnitude) {
-    const x = 1178;
-    const y = 555;
-    const size = 128;
+    const x = 1190;
+    const y = 585;
+    const size = 144;
     const color = MAG_COLORS[magnitude] || MAG_COLORS[8];
 
     ctx.save();
     ctx.translate(x, y);
+    ctx.rotate(-0.02);
 
-    const grd = ctx.createLinearGradient(-size, -size, size, size);
-    grd.addColorStop(0, shade(color, 1.35));
-    grd.addColorStop(0.45, color);
-    grd.addColorStop(1, shade(color, 0.55));
-
+    // Shadow
     ctx.beginPath();
-    ctx.moveTo(0, -size);
-    ctx.lineTo(size * 0.68, -size * 0.26);
-    ctx.lineTo(size * 0.5, size * 0.75);
-    ctx.lineTo(0, size);
-    ctx.lineTo(-size * 0.5, size * 0.75);
-    ctx.lineTo(-size * 0.68, -size * 0.26);
-    ctx.closePath();
-    ctx.fillStyle = grd;
+    ctx.ellipse(0, size * 0.98, size * 0.66, size * 0.16, 0, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(0,0,0,0.34)";
     ctx.fill();
-    ctx.lineWidth = 7;
+
+    // Main body (badge-like crystal)
+    const body = new Path2D();
+    body.moveTo(-size * 0.34, -size * 0.54);
+    body.lineTo(size * 0.22, -size * 0.62);
+    body.lineTo(size * 0.58, -size * 0.2);
+    body.lineTo(size * 0.45, size * 0.62);
+    body.lineTo(-size * 0.04, size * 0.92);
+    body.lineTo(-size * 0.48, size * 0.64);
+    body.lineTo(-size * 0.62, -size * 0.08);
+    body.closePath();
+
+    const bodyGrad = ctx.createLinearGradient(-size * 0.7, -size * 0.6, size * 0.6, size * 0.9);
+    bodyGrad.addColorStop(0, shade(color, 1.3));
+    bodyGrad.addColorStop(0.48, color);
+    bodyGrad.addColorStop(1, shade(color, 0.58));
+    ctx.fillStyle = bodyGrad;
+    ctx.fill(body);
+    ctx.lineWidth = 8;
     ctx.strokeStyle = shade(color, 0.35);
-    ctx.stroke();
+    ctx.stroke(body);
 
-    ctx.beginPath();
-    ctx.moveTo(0, -size * 0.84);
-    ctx.lineTo(size * 0.22, -size * 0.2);
-    ctx.lineTo(0, size * 0.88);
-    ctx.lineTo(-size * 0.22, -size * 0.2);
-    ctx.closePath();
-    ctx.strokeStyle = shade(color, 1.65);
-    ctx.lineWidth = 4;
-    ctx.stroke();
+    // Side facets
+    const leftFacet = new Path2D();
+    leftFacet.moveTo(-size * 0.53, -size * 0.04);
+    leftFacet.lineTo(-size * 0.39, -size * 0.46);
+    leftFacet.lineTo(-size * 0.25, -size * 0.43);
+    leftFacet.lineTo(-size * 0.36, size * 0.61);
+    leftFacet.lineTo(-size * 0.52, size * 0.46);
+    leftFacet.closePath();
+    ctx.fillStyle = shade(color, 0.72);
+    ctx.fill(leftFacet);
 
-    ctx.fillStyle = "rgba(255,255,255,0.78)";
+    const rightFacet = new Path2D();
+    rightFacet.moveTo(size * 0.23, -size * 0.52);
+    rightFacet.lineTo(size * 0.45, -size * 0.25);
+    rightFacet.lineTo(size * 0.36, size * 0.55);
+    rightFacet.lineTo(size * 0.16, size * 0.71);
+    rightFacet.lineTo(size * 0.03, -size * 0.34);
+    rightFacet.closePath();
+    ctx.fillStyle = shade(color, 0.66);
+    ctx.fill(rightFacet);
+
+    // Top plate for magnitude number
+    const cap = new Path2D();
+    cap.moveTo(-size * 0.05, -size * 0.98);
+    cap.lineTo(size * 0.28, -size * 0.87);
+    cap.lineTo(size * 0.42, -size * 0.63);
+    cap.lineTo(size * 0.25, -size * 0.42);
+    cap.lineTo(-size * 0.06, -size * 0.44);
+    cap.lineTo(-size * 0.2, -size * 0.67);
+    cap.closePath();
+    const capGrad = ctx.createLinearGradient(-size * 0.2, -size, size * 0.4, -size * 0.35);
+    capGrad.addColorStop(0, shade(color, 1.22));
+    capGrad.addColorStop(1, shade(color, 0.82));
+    ctx.fillStyle = capGrad;
+    ctx.fill(cap);
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = shade(color, 0.38);
+    ctx.stroke(cap);
+
+    // Engraved seismic symbol
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = shade(color, 1.5);
+    ctx.lineWidth = 9;
+    drawSeismicGlyph(size);
+
+    ctx.strokeStyle = shade(color, 0.92);
+    ctx.lineWidth = 3;
+    drawSeismicGlyph(size);
+
+    // Specular highlight
     ctx.beginPath();
-    ctx.arc(-size * 0.2, -size * 0.38, 12, 0, Math.PI * 2);
+    ctx.arc(-size * 0.16, -size * 0.42, 10, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255,255,255,0.82)";
     ctx.fill();
 
-    ctx.fillStyle = "#2B1B0D";
-    ctx.font = "700 52px 'Bebas Neue', sans-serif";
+    // Magnitude number on top plate
+    ctx.fillStyle = "rgba(35, 20, 14, 0.78)";
+    ctx.font = "700 56px 'Bebas Neue', sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(String(magnitude), 0, -8);
+    ctx.fillText(String(magnitude), size * 0.12, -size * 0.66);
 
     ctx.restore();
+  }
+
+  function drawSeismicGlyph(size) {
+    ctx.beginPath();
+    ctx.arc(-size * 0.18, -size * 0.03, size * 0.16, -Math.PI / 2, Math.PI / 2);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(-size * 0.06, -size * 0.03, size * 0.2, -Math.PI / 2, Math.PI / 2);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(size * 0.08, -size * 0.03, size * 0.2, Math.PI / 2, (Math.PI * 3) / 2);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(size * 0.2, -size * 0.03, size * 0.16, Math.PI / 2, (Math.PI * 3) / 2);
+    ctx.stroke();
   }
 
   function drawUploadBadge() {

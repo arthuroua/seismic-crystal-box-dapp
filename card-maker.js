@@ -107,9 +107,9 @@
     ctx.textBaseline = "middle";
 
     // Align text to the center of dark torso slots.
-    drawField(data.nick, 710, 456, 250, textColor, strokeColor);
+    drawField(data.nick, 710, 464, 250, textColor, strokeColor);
     drawField(data.country, 710, 563, 250, textColor, strokeColor);
-    drawField(String(data.messages), 710, 668, 250, textColor, strokeColor);
+    drawField(String(data.messages), 710, 660, 250, textColor, strokeColor);
   }
 
   function drawField(text, x, y, maxWidth, color, strokeColor) {
@@ -266,12 +266,12 @@
 
     octx.drawImage(crystalCutoutImage, 0, 0, crystalCutoutImage.width, crystalCutoutImage.height, 0, 0, w, h);
     removeNeutralBackground(octx, w, h);
+    stripEdgeNeutralBackground(octx, w, h);
 
     if (magnitude !== 9) {
       tintCrystalOnLayer(octx, magnitude, w, h);
     }
     drawCrystalTopNumber(octx, magnitude, w, h);
-    applyBadgeMask(octx, w, h);
     return off;
   }
 
@@ -332,26 +332,59 @@
     octx.putImageData(img, 0, 0);
   }
 
-  function applyBadgeMask(octx, w, h) {
-    octx.save();
-    octx.globalCompositeOperation = "destination-in";
+  function stripEdgeNeutralBackground(octx, w, h) {
+    const img = octx.getImageData(0, 0, w, h);
+    const px = img.data;
+    const q = new Int32Array(w * h);
+    const seen = new Uint8Array(w * h);
+    let head = 0;
+    let tail = 0;
 
-    const body = new Path2D();
-    body.moveTo(w * 0.24, h * 0.31);
-    body.lineTo(w * 0.38, h * 0.21);
-    body.lineTo(w * 0.62, h * 0.21);
-    body.lineTo(w * 0.76, h * 0.31);
-    body.lineTo(w * 0.74, h * 0.73);
-    body.lineTo(w * 0.50, h * 0.98);
-    body.lineTo(w * 0.26, h * 0.73);
-    body.closePath();
-    octx.fill(body);
+    function isNeutral(idx) {
+      const p = idx * 4;
+      const a = px[p + 3];
+      if (!a) return false;
+      const r = px[p] / 255;
+      const g = px[p + 1] / 255;
+      const b = px[p + 2] / 255;
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      const sat = max === 0 ? 0 : (max - min) / max;
+      const lum = (max + min) * 0.5;
+      return sat < 0.33 && lum > 0.14;
+    }
 
-    const cap = new Path2D();
-    polygonPathCtx(cap, w * 0.5, h * 0.12, h * 0.108, 6, -Math.PI / 2);
-    octx.fill(cap);
+    function push(x, y) {
+      if (x < 0 || y < 0 || x >= w || y >= h) return;
+      const idx = y * w + x;
+      if (seen[idx]) return;
+      if (!isNeutral(idx)) return;
+      seen[idx] = 1;
+      q[tail++] = idx;
+    }
 
-    octx.restore();
+    for (let x = 0; x < w; x += 1) {
+      push(x, 0);
+      push(x, h - 1);
+    }
+    for (let y = 0; y < h; y += 1) {
+      push(0, y);
+      push(w - 1, y);
+    }
+
+    while (head < tail) {
+      const idx = q[head++];
+      const p = idx * 4;
+      px[p + 3] = 0;
+      const x = idx % w;
+      const y = (idx / w) | 0;
+      push(x - 1, y);
+      push(x + 1, y);
+      push(x, y - 1);
+      push(x, y + 1);
+    }
+
+    octx.putImageData(img, 0, 0);
   }
 
   function polygonPath(cx, cy, radius, sides, rotation) {

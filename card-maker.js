@@ -2,6 +2,18 @@
   const cfg = window.SEISMIC_DAPP_CONFIG || {};
   const SITE_URL = cfg.siteUrl || window.location.origin;
   const TEMPLATE_SRC = "./assets/seismic-card-template.png";
+  const CRYSTAL_SHEET_SRC = "./assets/magnitude-crystals-sheet.jpg";
+
+  const CRYSTAL_SPRITES = {
+    1: { sx: 20, sy: 26, sw: 145, sh: 250 },
+    2: { sx: 155, sy: 26, sw: 145, sh: 250 },
+    3: { sx: 290, sy: 26, sw: 145, sh: 250 },
+    4: { sx: 425, sy: 26, sw: 145, sh: 250 },
+    5: { sx: 560, sy: 26, sw: 145, sh: 250 },
+    6: { sx: 695, sy: 26, sw: 145, sh: 250 },
+    7: { sx: 830, sy: 26, sw: 145, sh: 250 },
+    8: { sx: 962, sy: 26, sw: 145, sh: 250 }
+  };
 
   const MAG_COLORS = {
     1: "#E8D27A",
@@ -30,6 +42,7 @@
 
   const ctx = el.cardCanvas.getContext("2d");
   let templateImage = null;
+  let crystalSheetImage = null;
   let uploadImage = null;
 
   init().catch((e) => {
@@ -39,6 +52,11 @@
 
   async function init() {
     templateImage = await loadImage(TEMPLATE_SRC);
+    try {
+      crystalSheetImage = await loadImage(CRYSTAL_SHEET_SRC);
+    } catch {
+      crystalSheetImage = null;
+    }
     el.cardCanvas.width = templateImage.width;
     el.cardCanvas.height = templateImage.height;
 
@@ -94,9 +112,9 @@
     ctx.textBaseline = "middle";
 
     // Align text to the center of dark torso slots.
-    drawField(data.nick, 560, 408, 325, textColor, strokeColor);
-    drawField(data.country, 560, 493, 325, textColor, strokeColor);
-    drawField(String(data.messages), 560, 578, 325, textColor, strokeColor);
+    drawField(data.nick, 632, 408, 248, textColor, strokeColor);
+    drawField(data.country, 632, 493, 248, textColor, strokeColor);
+    drawField(String(data.messages), 632, 578, 248, textColor, strokeColor);
 
     ctx.font = "700 56px 'Bebas Neue', sans-serif";
     ctx.lineWidth = 8;
@@ -123,6 +141,52 @@
   }
 
   function drawCrystal(magnitude) {
+    if (crystalSheetImage && CRYSTAL_SPRITES[magnitude]) {
+      drawCrystalFromSheet(magnitude);
+      return;
+    }
+    drawCrystalVector(magnitude);
+  }
+
+  function drawCrystalFromSheet(magnitude) {
+    const x = 1192;
+    const y = 590;
+    const size = 142;
+    const sprite = CRYSTAL_SPRITES[magnitude];
+
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(-0.02);
+
+    ctx.beginPath();
+    ctx.ellipse(0, size * 1.02, size * 0.66, size * 0.16, 0, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(0,0,0,0.34)";
+    ctx.fill();
+
+    const badgePath = createBadgePath(size);
+    ctx.save();
+    ctx.clip(badgePath);
+    ctx.drawImage(
+      crystalSheetImage,
+      sprite.sx,
+      sprite.sy,
+      sprite.sw,
+      sprite.sh,
+      -size * 0.66,
+      -size * 1.06,
+      size * 1.32,
+      size * 2.12
+    );
+    ctx.restore();
+
+    ctx.lineWidth = 5.5;
+    ctx.strokeStyle = "rgba(24,16,12,0.62)";
+    ctx.stroke(badgePath);
+
+    ctx.restore();
+  }
+
+  function drawCrystalVector(magnitude) {
     const x = 1192;
     const y = 590;
     const size = 138;
@@ -139,15 +203,7 @@
     ctx.fill();
 
     // Main body (badge-like crystal, close to reference style)
-    const body = new Path2D();
-    body.moveTo(-size * 0.3, -size * 0.6);
-    body.lineTo(size * 0.18, -size * 0.62);
-    body.lineTo(size * 0.56, -size * 0.22);
-    body.lineTo(size * 0.44, size * 0.58);
-    body.lineTo(-size * 0.06, size * 0.9);
-    body.lineTo(-size * 0.5, size * 0.62);
-    body.lineTo(-size * 0.62, -size * 0.12);
-    body.closePath();
+    const body = createBadgePath(size);
 
     const bodyGrad = ctx.createLinearGradient(-size * 0.7, -size * 0.6, size * 0.6, size * 0.9);
     bodyGrad.addColorStop(0, shade(color, 1.3));
@@ -223,6 +279,19 @@
     ctx.fillText(String(magnitude), size * 0.1, -size * 0.66);
 
     ctx.restore();
+  }
+
+  function createBadgePath(size) {
+    const body = new Path2D();
+    body.moveTo(-size * 0.3, -size * 0.6);
+    body.lineTo(size * 0.18, -size * 0.62);
+    body.lineTo(size * 0.56, -size * 0.22);
+    body.lineTo(size * 0.44, size * 0.58);
+    body.lineTo(-size * 0.06, size * 0.9);
+    body.lineTo(-size * 0.5, size * 0.62);
+    body.lineTo(-size * 0.62, -size * 0.12);
+    body.closePath();
+    return body;
   }
 
   function drawSeismicGlyph(size) {

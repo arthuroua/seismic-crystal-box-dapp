@@ -4,6 +4,9 @@
   const TEMPLATE_SRC = "./assets/seismic-card-template.png";
   const CRYSTAL_SHEET_SRC = "./assets/magnitude-crystals-sheet.jpg";
   const CRYSTAL_9_SRC = "./assets/magnitude-9-ref.jpg";
+  const CRYSTAL_POS_X = 1148;
+  const CRYSTAL_POS_Y = 560;
+  const CRYSTAL_BASE_SIZE = 188;
 
   const CRYSTAL_SPRITES = {
     1: { sx: 20, sy: 26, sw: 145, sh: 250 },
@@ -162,9 +165,9 @@
   }
 
   function drawCrystalFromSheet(magnitude) {
-    const x = 1192;
-    const y = 590;
-    const size = 142 * getMagnitudeScale(magnitude);
+    const x = CRYSTAL_POS_X;
+    const y = CRYSTAL_POS_Y;
+    const size = CRYSTAL_BASE_SIZE * getMagnitudeScale(magnitude);
     const sprite = CRYSTAL_SPRITES[magnitude];
 
     ctx.save();
@@ -200,9 +203,9 @@
   }
 
   function drawCrystalNineRef(magnitude) {
-    const x = 1192;
-    const y = 590;
-    const size = 142 * getMagnitudeScale(magnitude);
+    const x = CRYSTAL_POS_X;
+    const y = CRYSTAL_POS_Y;
+    const size = CRYSTAL_BASE_SIZE * getMagnitudeScale(magnitude);
 
     ctx.save();
     ctx.translate(x, y);
@@ -237,9 +240,9 @@
   }
 
   function drawCrystalVector(magnitude) {
-    const x = 1192;
-    const y = 590;
-    const size = 138 * getMagnitudeScale(magnitude);
+    const x = CRYSTAL_POS_X;
+    const y = CRYSTAL_POS_Y;
+    const size = (CRYSTAL_BASE_SIZE - 8) * getMagnitudeScale(magnitude);
     const color = MAG_COLORS[magnitude] || MAG_COLORS[8];
 
     ctx.save();

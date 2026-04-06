@@ -15,6 +15,8 @@ window.SEISMIC_DAPP_CONFIG = {
 
   // Set deployed contract address here.
   contractAddress: "0x0000000000000000000000000000000000000000",
+  // Optional: deployed SeismicCardImageNFT minter contract for card-maker mint button.
+  cardMinterAddress: "",
 
   // Optional local images (you said you will add them).
   assetImages: {

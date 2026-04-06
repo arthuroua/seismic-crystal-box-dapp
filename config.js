@@ -15,6 +15,8 @@
 
   // Set deployed contract address here.
   contractAddress: "0xFc4196e80CB6f2a2b2DbC99C50feE2E83B16Df15",
+  // Optional: deployed SeismicCardImageNFT minter contract for card-maker mint button.
+  cardMinterAddress: "0x5636351BB0fc5f890c896b7BCa603976A88D8D45",
 
   // Optional local images (you said you will add them).
   assetImages: {

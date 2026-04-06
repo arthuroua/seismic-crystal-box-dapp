@@ -138,6 +138,11 @@ select {
   background: linear-gradient(130deg, #9a2b6f 0%, #8f3b24 100%);
 }
 
+.btn-mint {
+  border-color: rgba(114, 255, 218, 0.65);
+  background: linear-gradient(130deg, #1f6554 0%, #154644 100%);
+}
+
 .btn-ghost {
   border-color: rgba(255, 183, 76, 0.58);
   background: linear-gradient(130deg, #4f2b53 0%, #35223f 100%);

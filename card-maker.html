@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Seismic Post Card Builder</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.15.0/dist/ethers.umd.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -59,16 +60,13 @@
               <span class="m-chip m9">9.0</span>
             </div>
           </div>
-          <label class="wide">
-            Your image/logo (optional)
-            <input id="photoInput" type="file" accept="image/*" />
-          </label>
         </div>
 
         <div class="actions">
           <button id="renderBtn" class="btn">Generate Card</button>
           <button id="downloadBtn" class="btn btn-secondary">Download PNG</button>
           <button id="shareBtn" class="btn btn-primary">Share to X</button>
+          <button id="mintBtn" class="btn btn-mint">Mint Card NFT (Seismic)</button>
           <a class="btn btn-ghost" href="./index.html">Back to dApp</a>
         </div>
         <p id="hintText" class="hint"></p>
@@ -80,6 +78,6 @@
     </main>
 
     <script src="./config.js"></script>
-    <script src="./card-maker.js?v=20260406m"></script>
+    <script src="./card-maker.js?v=20260406p"></script>
   </body>
 </html>

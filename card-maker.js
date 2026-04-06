@@ -1,11 +1,17 @@
 (function () {
   const cfg = window.SEISMIC_DAPP_CONFIG || {};
   const SITE_URL = cfg.siteUrl || window.location.origin;
+  const CHAIN_ID_HEX = cfg.chainIdHex || "0x1404";
+  const CHAIN_ID_DEC = Number(cfg.chainIdDecimal || 5124);
   const TEMPLATE_SRC = "./assets/seismic-card-template.png";
   const CRYSTAL_9_SRC = "./assets/magnitude-9-ref.jpg";
   const CRYSTAL_POS_X = 1010;
   const CRYSTAL_POS_Y = 686;
   const CRYSTAL_BASE_SIZE = 125;
+  const CARD_MINTER_ABI = [
+    "function mintCard(string metadataURI) returns (uint256 tokenId)",
+    "function nextTokenId() view returns (uint256)"
+  ];
 
   const MAG_COLORS = {
     1: "#E8D27A",
@@ -24,10 +30,10 @@
     countryInput: document.getElementById("countryInput"),
     messagesInput: document.getElementById("messagesInput"),
     magnitudeInput: document.getElementById("magnitudeInput"),
-    photoInput: document.getElementById("photoInput"),
     renderBtn: document.getElementById("renderBtn"),
     downloadBtn: document.getElementById("downloadBtn"),
     shareBtn: document.getElementById("shareBtn"),
+    mintBtn: document.getElementById("mintBtn"),
     hintText: document.getElementById("hintText"),
     cardCanvas: document.getElementById("cardCanvas")
   };
@@ -36,7 +42,6 @@
   let templateImage = null;
   let crystal9Image = null;
   let crystalCutoutImage = null;
-  let uploadImage = null;
 
   init().catch((e) => {
     console.error(e);
@@ -58,19 +63,8 @@
     el.renderBtn.addEventListener("click", renderCard);
     el.downloadBtn.addEventListener("click", downloadCard);
     el.shareBtn.addEventListener("click", shareToX);
-    el.photoInput.addEventListener("change", onPhotoPick);
+    el.mintBtn?.addEventListener("click", mintCardNft);
 
-    renderCard();
-  }
-
-  async function onPhotoPick(event) {
-    const file = event.target.files && event.target.files[0];
-    if (!file) {
-      uploadImage = null;
-      renderCard();
-      return;
-    }
-    uploadImage = await loadImage(URL.createObjectURL(file));
     renderCard();
   }
 
@@ -97,7 +91,6 @@
 
     drawOverlayText(data);
     drawCrystal(data.magnitude);
-    drawUploadBadge();
   }
 
   function drawOverlayText(data) {
@@ -155,8 +148,23 @@
     ctx.fillStyle = "rgba(0,0,0,0.34)";
     ctx.fill();
 
+    // Soft emissive glow around badge.
+    const glowColor = MAG_COLORS[magnitude] || "#56ccff";
+    ctx.beginPath();
+    ctx.ellipse(0, -size * 0.12, size * 0.56, size * 0.82, 0, 0, Math.PI * 2);
+    ctx.fillStyle = glowColor;
+    ctx.globalAlpha = 0.14;
+    ctx.shadowColor = glowColor;
+    ctx.shadowBlur = 26;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+
     const rendered = renderCrystalLayer(magnitude, targetW, targetH, size);
+    ctx.save();
+    clipCrystalBadge(ctx, dx, dy, targetW, targetH);
     ctx.drawImage(rendered, dx, dy, targetW, targetH);
+    ctx.restore();
 
     ctx.restore();
   }
@@ -291,23 +299,39 @@
 
   function drawCrystalTopNumber(octx, magnitude, w, h) {
     const cx = w * 0.5;
-    const cy = h * 0.128;
-    const r = h * 0.105;
+    const cy = h * 0.108;
+    const r = h * 0.126;
     const color = MAG_COLORS[magnitude] || "#58c7ff";
 
+    // Repaint full top cap area to hide original baked "9" from the source image.
     octx.beginPath();
     polygonPathCtx(octx, cx, cy, r, 6, -Math.PI / 2);
     octx.fillStyle = shade(color, 1.08);
     octx.fill();
-    octx.lineWidth = Math.max(2, h * 0.03);
-    octx.strokeStyle = "rgba(20, 34, 50, 0.62)";
+    octx.lineWidth = Math.max(3, h * 0.04);
+    octx.strokeStyle = "rgba(20, 34, 50, 0.72)";
     octx.stroke();
 
-    octx.fillStyle = "rgba(18, 28, 42, 0.86)";
-    octx.font = `700 ${Math.max(18, h * 0.16)}px 'Bebas Neue', sans-serif`;
+    octx.fillStyle = "rgba(12, 22, 36, 0.92)";
+    octx.font = `700 ${Math.max(18, h * 0.145)}px 'Bebas Neue', sans-serif`;
     octx.textAlign = "center";
     octx.textBaseline = "middle";
-    octx.fillText(String(magnitude), cx, cy + h * 0.006);
+    octx.fillText(String(magnitude), cx, cy + h * 0.008);
+  }
+
+  function clipCrystalBadge(targetCtx, x, y, w, h) {
+    targetCtx.beginPath();
+    targetCtx.moveTo(x + w * 0.5, y + h * 0.01);
+    targetCtx.lineTo(x + w * 0.72, y + h * 0.11);
+    targetCtx.lineTo(x + w * 0.89, y + h * 0.36);
+    targetCtx.lineTo(x + w * 0.84, y + h * 0.72);
+    targetCtx.lineTo(x + w * 0.57, y + h * 0.995);
+    targetCtx.lineTo(x + w * 0.43, y + h * 0.995);
+    targetCtx.lineTo(x + w * 0.16, y + h * 0.72);
+    targetCtx.lineTo(x + w * 0.11, y + h * 0.36);
+    targetCtx.lineTo(x + w * 0.28, y + h * 0.11);
+    targetCtx.closePath();
+    targetCtx.clip();
   }
 
   function removeNeutralBackground(octx, w, h) {
@@ -438,27 +462,6 @@
     ctx.stroke();
   }
 
-  function drawUploadBadge() {
-    if (!uploadImage) return;
-    const x = 770;
-    const y = 760;
-    const s = 126;
-
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(x, y, s / 2, 0, Math.PI * 2);
-    ctx.closePath();
-    ctx.clip();
-    ctx.drawImage(uploadImage, x - s / 2, y - s / 2, s, s);
-    ctx.restore();
-
-    ctx.beginPath();
-    ctx.arc(x, y, s / 2 + 3, 0, Math.PI * 2);
-    ctx.strokeStyle = "rgba(255, 224, 180, 0.92)";
-    ctx.lineWidth = 6;
-    ctx.stroke();
-  }
-
   function downloadCard() {
     renderCard();
     const a = document.createElement("a");
@@ -476,6 +479,102 @@
     const intent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(SITE_URL)}`;
     window.open(intent, "_blank", "noopener,noreferrer");
     el.hintText.textContent = "Twitter/X opened. Attach downloaded image to your post.";
+  }
+
+  async function mintCardNft() {
+    try {
+      if (!cfg.cardMinterAddress) {
+        el.hintText.textContent = "Set cardMinterAddress in config.js to enable mint.";
+        return;
+      }
+      if (!window.ethereum || !window.ethers) {
+        el.hintText.textContent = "Wallet or ethers.js not found in browser.";
+        return;
+      }
+
+      el.mintBtn.disabled = true;
+      el.hintText.textContent = "Preparing card image...";
+
+      renderCard();
+      const cardPng = el.cardCanvas.toDataURL("image/png");
+      const data = getData();
+
+      el.hintText.textContent = "Uploading card metadata...";
+      const uploadRes = await fetch("/api/card-upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          imageDataUrl: cardPng,
+          nick: data.nick,
+          country: data.country,
+          messages: data.messages,
+          magnitude: data.magnitude
+        })
+      });
+      if (!uploadRes.ok) {
+        const errBody = await uploadRes.text();
+        throw new Error(errBody || "Card upload failed");
+      }
+      const uploadJson = await uploadRes.json();
+      const metadataUri = uploadJson.metadataUri;
+      if (!metadataUri) {
+        throw new Error("Upload completed without metadata URI");
+      }
+
+      const provider = new window.ethers.BrowserProvider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      const network = await provider.getNetwork();
+      if (Number(network.chainId) !== CHAIN_ID_DEC) {
+        await switchToSeismicNetwork();
+      }
+
+      const signer = await provider.getSigner();
+      const contract = new window.ethers.Contract(cfg.cardMinterAddress, CARD_MINTER_ABI, signer);
+      el.hintText.textContent = "Sending mint transaction...";
+
+      const tx = await contract.mintCard(metadataUri);
+      const txUrl = `${(cfg.explorerBase || "").replace(/\/$/, "")}/tx/${tx.hash}`;
+      el.hintText.textContent = `Mint tx sent: ${tx.hash.slice(0, 10)}...`;
+
+      await tx.wait();
+      let tokenIdText = "";
+      try {
+        const nextId = await contract.nextTokenId();
+        tokenIdText = ` Token #${nextId.toString()}.`;
+      } catch {
+        tokenIdText = "";
+      }
+
+      el.hintText.textContent = `Card minted on Seismic.${tokenIdText} ${txUrl}`;
+    } catch (err) {
+      console.error(err);
+      const msg = err?.shortMessage || err?.message || "Mint failed.";
+      el.hintText.textContent = msg;
+    } finally {
+      if (el.mintBtn) el.mintBtn.disabled = false;
+    }
+  }
+
+  async function switchToSeismicNetwork() {
+    try {
+      await window.ethereum.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: CHAIN_ID_HEX }]
+      });
+    } catch {
+      await window.ethereum.request({
+        method: "wallet_addEthereumChain",
+        params: [
+          {
+            chainId: CHAIN_ID_HEX,
+            chainName: cfg.chainName || "Seismic Testnet",
+            nativeCurrency: cfg.nativeCurrency || { name: "Seismic", symbol: "SEIS", decimals: 18 },
+            rpcUrls: [cfg.rpcHttp || "https://gcp-2.seismictest.net/rpc"],
+            blockExplorerUrls: [cfg.explorerBase || "https://seismic-testnet.socialscan.io"]
+          }
+        ]
+      });
+    }
   }
 
   function loadImage(src) {

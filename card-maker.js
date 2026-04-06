@@ -3,7 +3,7 @@
   const SITE_URL = cfg.siteUrl || window.location.origin;
   const TEMPLATE_SRC = "./assets/seismic-card-template.png";
   const CRYSTAL_9_SRC = "./assets/magnitude-9-ref.jpg";
-  const CRYSTAL_POS_X = 1046;
+  const CRYSTAL_POS_X = 1018;
   const CRYSTAL_POS_Y = 652;
   const CRYSTAL_BASE_SIZE = 125;
 
@@ -107,9 +107,9 @@
     ctx.textBaseline = "middle";
 
     // Align text to the center of dark torso slots.
-    drawField(data.nick, 710, 446, 250, textColor, strokeColor);
-    drawField(data.country, 710, 552, 250, textColor, strokeColor);
-    drawField(String(data.messages), 710, 656, 250, textColor, strokeColor);
+    drawField(data.nick, 710, 456, 250, textColor, strokeColor);
+    drawField(data.country, 710, 563, 250, textColor, strokeColor);
+    drawField(String(data.messages), 710, 668, 250, textColor, strokeColor);
   }
 
   function drawField(text, x, y, maxWidth, color, strokeColor) {
@@ -271,6 +271,7 @@
       tintCrystalOnLayer(octx, magnitude, w, h);
     }
     drawCrystalTopNumber(octx, magnitude, w, h);
+    applyBadgeMask(octx, w, h);
     return off;
   }
 
@@ -329,6 +330,28 @@
       }
     }
     octx.putImageData(img, 0, 0);
+  }
+
+  function applyBadgeMask(octx, w, h) {
+    octx.save();
+    octx.globalCompositeOperation = "destination-in";
+
+    const body = new Path2D();
+    body.moveTo(w * 0.24, h * 0.31);
+    body.lineTo(w * 0.38, h * 0.21);
+    body.lineTo(w * 0.62, h * 0.21);
+    body.lineTo(w * 0.76, h * 0.31);
+    body.lineTo(w * 0.74, h * 0.73);
+    body.lineTo(w * 0.50, h * 0.98);
+    body.lineTo(w * 0.26, h * 0.73);
+    body.closePath();
+    octx.fill(body);
+
+    const cap = new Path2D();
+    polygonPathCtx(cap, w * 0.5, h * 0.12, h * 0.108, 6, -Math.PI / 2);
+    octx.fill(cap);
+
+    octx.restore();
   }
 
   function polygonPath(cx, cy, radius, sides, rotation) {

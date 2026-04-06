@@ -197,10 +197,7 @@
     ctx.shadowBlur = 0;
 
     const rendered = renderCrystalLayer(magnitude, targetW, targetH, size);
-    ctx.save();
-    clipCrystalBadge(ctx, dx, dy, targetW, targetH);
     ctx.drawImage(rendered, dx, dy, targetW, targetH);
-    ctx.restore();
 
     ctx.restore();
   }
@@ -311,10 +308,12 @@
     octx.drawImage(crystalCutoutImage, 0, 0, crystalCutoutImage.width, crystalCutoutImage.height, 0, 0, w, h);
     removeNeutralBackground(octx, w, h);
     stripEdgeNeutralBackground(octx, w, h);
+    stripEdgeByCornerDistance(octx, w, h, 102);
 
     if (magnitude !== 9) {
       tintCrystalOnLayer(octx, magnitude, w, h);
     }
+    applyCrystalShine(octx, magnitude, w, h);
     drawCrystalTopNumber(octx, magnitude, w, h);
     return off;
   }
@@ -355,19 +354,121 @@
     octx.fillText(String(magnitude), cx, cy + h * 0.008);
   }
 
-  function clipCrystalBadge(targetCtx, x, y, w, h) {
-    targetCtx.beginPath();
-    targetCtx.moveTo(x + w * 0.5, y + h * 0.01);
-    targetCtx.lineTo(x + w * 0.72, y + h * 0.11);
-    targetCtx.lineTo(x + w * 0.89, y + h * 0.36);
-    targetCtx.lineTo(x + w * 0.84, y + h * 0.72);
-    targetCtx.lineTo(x + w * 0.57, y + h * 0.995);
-    targetCtx.lineTo(x + w * 0.43, y + h * 0.995);
-    targetCtx.lineTo(x + w * 0.16, y + h * 0.72);
-    targetCtx.lineTo(x + w * 0.11, y + h * 0.36);
-    targetCtx.lineTo(x + w * 0.28, y + h * 0.11);
-    targetCtx.closePath();
-    targetCtx.clip();
+  function applyCrystalShine(octx, magnitude, w, h) {
+    const color = MAG_COLORS[magnitude] || "#58c7ff";
+    octx.save();
+    octx.globalCompositeOperation = "screen";
+
+    // Global glossy lift.
+    const gloss = octx.createLinearGradient(0, 0, w, h);
+    gloss.addColorStop(0, "rgba(255,255,255,0.28)");
+    gloss.addColorStop(0.38, hexToRgba(color, 0.12));
+    gloss.addColorStop(1, "rgba(255,255,255,0.04)");
+    octx.fillStyle = gloss;
+    octx.fillRect(0, 0, w, h);
+
+    // Diagonal iridescent streak.
+    octx.translate(w * 0.52, h * 0.48);
+    octx.rotate(-0.42);
+    const streak = octx.createLinearGradient(-w * 0.3, 0, w * 0.3, 0);
+    streak.addColorStop(0, "rgba(255,255,255,0)");
+    streak.addColorStop(0.46, "rgba(255,255,255,0.34)");
+    streak.addColorStop(0.58, hexToRgba(color, 0.26));
+    streak.addColorStop(1, "rgba(255,255,255,0)");
+    octx.fillStyle = streak;
+    octx.fillRect(-w * 0.44, -h * 0.07, w * 0.88, h * 0.14);
+    octx.rotate(0.42);
+    octx.translate(-w * 0.52, -h * 0.48);
+
+    // Facet sparkle points.
+    const sparkles = [
+      { x: w * 0.32, y: h * 0.34, r: h * 0.028 },
+      { x: w * 0.62, y: h * 0.55, r: h * 0.022 },
+      { x: w * 0.47, y: h * 0.72, r: h * 0.018 }
+    ];
+    for (const s of sparkles) {
+      const rg = octx.createRadialGradient(s.x, s.y, 1, s.x, s.y, s.r);
+      rg.addColorStop(0, "rgba(255,255,255,0.82)");
+      rg.addColorStop(1, "rgba(255,255,255,0)");
+      octx.fillStyle = rg;
+      octx.beginPath();
+      octx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      octx.fill();
+    }
+
+    octx.restore();
+    // Keep shine strictly within crystal silhouette.
+    octx.globalCompositeOperation = "source-atop";
+    octx.globalCompositeOperation = "source-over";
+  }
+
+  function stripEdgeByCornerDistance(octx, w, h, threshold) {
+    const img = octx.getImageData(0, 0, w, h);
+    const px = img.data;
+    const q = new Int32Array(w * h);
+    const seen = new Uint8Array(w * h);
+    let head = 0;
+    let tail = 0;
+
+    const corners = [
+      [1, 1],
+      [w - 2, 1],
+      [1, h - 2],
+      [w - 2, h - 2]
+    ];
+    let cr = 0, cg = 0, cb = 0, n = 0;
+    for (const [x, y] of corners) {
+      const p = (y * w + x) * 4;
+      cr += px[p];
+      cg += px[p + 1];
+      cb += px[p + 2];
+      n += 1;
+    }
+    cr /= n;
+    cg /= n;
+    cb /= n;
+
+    function isCornerLike(idx) {
+      const p = idx * 4;
+      const a = px[p + 3];
+      if (!a) return false;
+      const dr = Math.abs(px[p] - cr);
+      const dg = Math.abs(px[p + 1] - cg);
+      const db = Math.abs(px[p + 2] - cb);
+      return dr + dg + db <= threshold;
+    }
+
+    function push(x, y) {
+      if (x < 0 || y < 0 || x >= w || y >= h) return;
+      const idx = y * w + x;
+      if (seen[idx]) return;
+      if (!isCornerLike(idx)) return;
+      seen[idx] = 1;
+      q[tail++] = idx;
+    }
+
+    for (let x = 0; x < w; x += 1) {
+      push(x, 0);
+      push(x, h - 1);
+    }
+    for (let y = 0; y < h; y += 1) {
+      push(0, y);
+      push(w - 1, y);
+    }
+
+    while (head < tail) {
+      const idx = q[head++];
+      const p = idx * 4;
+      px[p + 3] = 0;
+      const x = idx % w;
+      const y = (idx / w) | 0;
+      push(x - 1, y);
+      push(x + 1, y);
+      push(x, y - 1);
+      push(x, y + 1);
+    }
+
+    octx.putImageData(img, 0, 0);
   }
 
   function removeNeutralBackground(octx, w, h) {
@@ -557,11 +658,16 @@
         throw new Error("Upload completed without metadata URI");
       }
 
-      const provider = new window.ethers.BrowserProvider(window.ethereum);
-      await provider.send("eth_requestAccounts", []);
+      const injected = getPreferredInjectedProvider();
+      if (!injected) {
+        throw new Error("MetaMask or Rabby not found.");
+      }
+
+      await injected.request({ method: "eth_requestAccounts" });
+      const provider = new window.ethers.BrowserProvider(injected);
       const network = await provider.getNetwork();
       if (Number(network.chainId) !== CHAIN_ID_DEC) {
-        await switchToSeismicNetwork();
+        await switchToSeismicNetwork(injected);
       }
 
       const signer = await provider.getSigner();
@@ -591,14 +697,16 @@
     }
   }
 
-  async function switchToSeismicNetwork() {
+  async function switchToSeismicNetwork(injected) {
+    const eth = injected || window.ethereum;
+    if (!eth) throw new Error("No injected wallet provider.");
     try {
-      await window.ethereum.request({
+      await eth.request({
         method: "wallet_switchEthereumChain",
         params: [{ chainId: CHAIN_ID_HEX }]
       });
     } catch {
-      await window.ethereum.request({
+      await eth.request({
         method: "wallet_addEthereumChain",
         params: [
           {
@@ -611,6 +719,18 @@
         ]
       });
     }
+  }
+
+  function getPreferredInjectedProvider() {
+    const eth = window.ethereum;
+    if (!eth) return null;
+    const providers = Array.isArray(eth.providers) && eth.providers.length > 0 ? eth.providers : [eth];
+
+    const isMetaMask = (p) => Boolean(p?.isMetaMask) && !p?.isBraveWallet;
+    const isRabby = (p) => Boolean(p?.isRabby);
+    const isOkx = (p) => Boolean(p?.isOkxWallet || p?.isOKExWallet);
+
+    return providers.find(isMetaMask) || providers.find(isRabby) || providers.find((p) => !isOkx(p)) || providers[0];
   }
 
   function loadImage(src) {

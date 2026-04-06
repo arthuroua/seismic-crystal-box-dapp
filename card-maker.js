@@ -2,22 +2,10 @@
   const cfg = window.SEISMIC_DAPP_CONFIG || {};
   const SITE_URL = cfg.siteUrl || window.location.origin;
   const TEMPLATE_SRC = "./assets/seismic-card-template.png";
-  const CRYSTAL_SHEET_SRC = "./assets/magnitude-crystals-sheet.jpg";
   const CRYSTAL_9_SRC = "./assets/magnitude-9-ref.jpg";
-  const CRYSTAL_POS_X = 1148;
-  const CRYSTAL_POS_Y = 560;
-  const CRYSTAL_BASE_SIZE = 188;
-
-  const CRYSTAL_SPRITES = {
-    1: { sx: 20, sy: 26, sw: 145, sh: 250 },
-    2: { sx: 155, sy: 26, sw: 145, sh: 250 },
-    3: { sx: 290, sy: 26, sw: 145, sh: 250 },
-    4: { sx: 425, sy: 26, sw: 145, sh: 250 },
-    5: { sx: 560, sy: 26, sw: 145, sh: 250 },
-    6: { sx: 695, sy: 26, sw: 145, sh: 250 },
-    7: { sx: 830, sy: 26, sw: 145, sh: 250 },
-    8: { sx: 962, sy: 26, sw: 145, sh: 250 }
-  };
+  const CRYSTAL_POS_X = 1128;
+  const CRYSTAL_POS_Y = 640;
+  const CRYSTAL_BASE_SIZE = 125;
 
   const MAG_COLORS = {
     1: "#E8D27A",
@@ -46,7 +34,6 @@
 
   const ctx = el.cardCanvas.getContext("2d");
   let templateImage = null;
-  let crystalSheetImage = null;
   let crystal9Image = null;
   let uploadImage = null;
 
@@ -57,11 +44,6 @@
 
   async function init() {
     templateImage = await loadImage(TEMPLATE_SRC);
-    try {
-      crystalSheetImage = await loadImage(CRYSTAL_SHEET_SRC);
-    } catch {
-      crystalSheetImage = null;
-    }
     try {
       crystal9Image = await loadImage(CRYSTAL_9_SRC);
     } catch {
@@ -153,26 +135,21 @@
   }
 
   function drawCrystal(magnitude) {
-    if (magnitude === 9 && crystal9Image) {
-      drawCrystalNineRef(magnitude);
-      return;
-    }
-    if (crystalSheetImage && CRYSTAL_SPRITES[magnitude]) {
-      drawCrystalFromSheet(magnitude);
+    if (crystal9Image) {
+      drawCrystalFromRef(magnitude);
       return;
     }
     drawCrystalVector(magnitude);
   }
 
-  function drawCrystalFromSheet(magnitude) {
+  function drawCrystalFromRef(magnitude) {
     const x = CRYSTAL_POS_X;
     const y = CRYSTAL_POS_Y;
     const size = CRYSTAL_BASE_SIZE * getMagnitudeScale(magnitude);
-    const sprite = CRYSTAL_SPRITES[magnitude];
 
     ctx.save();
     ctx.translate(x, y);
-    ctx.rotate(-0.02);
+    ctx.rotate(-0.08);
 
     ctx.beginPath();
     ctx.ellipse(0, size * 1.02, size * 0.66, size * 0.16, 0, 0, Math.PI * 2);
@@ -180,61 +157,24 @@
     ctx.fill();
 
     const badgePath = createBadgePath(size);
+    const dx = -size * 0.66;
+    const dy = -size * 1.06;
+    const dw = size * 1.32;
+    const dh = size * 2.12;
+
     ctx.save();
     ctx.clip(badgePath);
-    ctx.drawImage(
-      crystalSheetImage,
-      sprite.sx,
-      sprite.sy,
-      sprite.sw,
-      sprite.sh,
-      -size * 0.66,
-      -size * 1.06,
-      size * 1.32,
-      size * 2.12
-    );
+    ctx.drawImage(crystal9Image, 0, 0, crystal9Image.width, crystal9Image.height, dx, dy, dw, dh);
+    if (magnitude !== 9) {
+      tintCrystal(dx, dy, dw, dh, MAG_COLORS[magnitude] || "#56ccff");
+    }
     ctx.restore();
 
-    ctx.lineWidth = 5.5;
+    ctx.lineWidth = 5;
     ctx.strokeStyle = "rgba(24,16,12,0.62)";
     ctx.stroke(badgePath);
 
-    ctx.restore();
-  }
-
-  function drawCrystalNineRef(magnitude) {
-    const x = CRYSTAL_POS_X;
-    const y = CRYSTAL_POS_Y;
-    const size = CRYSTAL_BASE_SIZE * getMagnitudeScale(magnitude);
-
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(-0.02);
-
-    ctx.beginPath();
-    ctx.ellipse(0, size * 1.02, size * 0.66, size * 0.16, 0, 0, Math.PI * 2);
-    ctx.fillStyle = "rgba(0,0,0,0.34)";
-    ctx.fill();
-
-    const badgePath = createBadgePath(size);
-    ctx.save();
-    ctx.clip(badgePath);
-    ctx.drawImage(
-      crystal9Image,
-      0,
-      0,
-      crystal9Image.width,
-      crystal9Image.height,
-      -size * 0.66,
-      -size * 1.06,
-      size * 1.32,
-      size * 2.12
-    );
-    ctx.restore();
-
-    ctx.lineWidth = 5.5;
-    ctx.strokeStyle = "rgba(24,16,12,0.62)";
-    ctx.stroke(badgePath);
+    drawCrystalNumber(magnitude, size);
 
     ctx.restore();
   }
@@ -242,7 +182,7 @@
   function drawCrystalVector(magnitude) {
     const x = CRYSTAL_POS_X;
     const y = CRYSTAL_POS_Y;
-    const size = (CRYSTAL_BASE_SIZE - 8) * getMagnitudeScale(magnitude);
+    const size = CRYSTAL_BASE_SIZE * getMagnitudeScale(magnitude);
     const color = MAG_COLORS[magnitude] || MAG_COLORS[8];
 
     ctx.save();
@@ -332,6 +272,55 @@
     ctx.fillText(String(magnitude), size * 0.1, -size * 0.66);
 
     ctx.restore();
+  }
+
+  function tintCrystal(x, y, w, h, color) {
+    ctx.save();
+    ctx.globalCompositeOperation = "color";
+    ctx.globalAlpha = 0.88;
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, w, h);
+    ctx.globalCompositeOperation = "multiply";
+    ctx.globalAlpha = 0.22;
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, w, h);
+    ctx.globalCompositeOperation = "screen";
+    ctx.globalAlpha = 0.14;
+    ctx.fillStyle = "rgba(255,255,255,0.9)";
+    ctx.fillRect(x, y, w, h);
+    ctx.restore();
+  }
+
+  function drawCrystalNumber(magnitude, size) {
+    const cx = size * 0.1;
+    const cy = -size * 0.66;
+    const r = size * 0.26;
+    const color = MAG_COLORS[magnitude] || "#58c7ff";
+
+    ctx.beginPath();
+    polygonPath(cx, cy, r, 6, -Math.PI / 2);
+    ctx.fillStyle = shade(color, 1.18);
+    ctx.fill();
+    ctx.lineWidth = Math.max(2, size * 0.06);
+    ctx.strokeStyle = "rgba(20, 34, 50, 0.62)";
+    ctx.stroke();
+
+    ctx.fillStyle = "rgba(24, 34, 48, 0.82)";
+    ctx.font = `700 ${Math.max(20, size * 0.36)}px 'Bebas Neue', sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(String(magnitude), cx, cy + size * 0.01);
+  }
+
+  function polygonPath(cx, cy, radius, sides, rotation) {
+    for (let i = 0; i < sides; i += 1) {
+      const a = rotation + (i * Math.PI * 2) / sides;
+      const px = cx + Math.cos(a) * radius;
+      const py = cy + Math.sin(a) * radius;
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
   }
 
   function getMagnitudeScale(magnitude) {

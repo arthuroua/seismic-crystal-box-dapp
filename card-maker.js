@@ -3,7 +3,7 @@
   const SITE_URL = cfg.siteUrl || window.location.origin;
   const TEMPLATE_SRC = "./assets/seismic-card-template.png";
   const CRYSTAL_9_SRC = "./assets/magnitude-9-ref.jpg";
-  const CRYSTAL_POS_X = 1110;
+  const CRYSTAL_POS_X = 1092;
   const CRYSTAL_POS_Y = 652;
   const CRYSTAL_BASE_SIZE = 125;
 
@@ -108,8 +108,8 @@
 
     // Align text to the center of dark torso slots.
     drawField(data.nick, 710, 430, 250, textColor, strokeColor);
-    drawField(data.country, 710, 515, 250, textColor, strokeColor);
-    drawField(String(data.messages), 710, 600, 250, textColor, strokeColor);
+    drawField(data.country, 710, 523, 250, textColor, strokeColor);
+    drawField(String(data.messages), 710, 608, 250, textColor, strokeColor);
 
     ctx.font = "700 56px 'Bebas Neue', sans-serif";
     ctx.lineWidth = 8;
@@ -167,8 +167,7 @@
     if (magnitude !== 9) {
       tintCrystal(dx, dy, targetW, targetH, MAG_COLORS[magnitude] || "#56ccff");
     }
-
-    drawCrystalNumber(magnitude, size);
+    maskCrystalTopNumber(size, magnitude);
 
     ctx.restore();
   }
@@ -270,22 +269,19 @@
 
   function tintCrystal(x, y, w, h, color) {
     ctx.save();
-    ctx.globalCompositeOperation = "color";
-    ctx.globalAlpha = 0.88;
+    // Apply tint only where crystal pixels already exist (no colored rectangle background).
+    ctx.globalCompositeOperation = "source-atop";
+    ctx.globalAlpha = 0.72;
     ctx.fillStyle = color;
     ctx.fillRect(x, y, w, h);
-    ctx.globalCompositeOperation = "multiply";
-    ctx.globalAlpha = 0.22;
+    ctx.globalCompositeOperation = "source-atop";
+    ctx.globalAlpha = 0.16;
     ctx.fillStyle = color;
-    ctx.fillRect(x, y, w, h);
-    ctx.globalCompositeOperation = "screen";
-    ctx.globalAlpha = 0.14;
-    ctx.fillStyle = "rgba(255,255,255,0.9)";
     ctx.fillRect(x, y, w, h);
     ctx.restore();
   }
 
-  function drawCrystalNumber(magnitude, size) {
+  function maskCrystalTopNumber(size, magnitude) {
     const cx = size * 0.1;
     const cy = -size * 0.66;
     const r = size * 0.26;
@@ -293,17 +289,11 @@
 
     ctx.beginPath();
     polygonPath(cx, cy, r, 6, -Math.PI / 2);
-    ctx.fillStyle = shade(color, 1.18);
+    ctx.fillStyle = shade(color, 1.08);
     ctx.fill();
     ctx.lineWidth = Math.max(2, size * 0.06);
     ctx.strokeStyle = "rgba(20, 34, 50, 0.62)";
     ctx.stroke();
-
-    ctx.fillStyle = "rgba(24, 34, 48, 0.82)";
-    ctx.font = `700 ${Math.max(20, size * 0.36)}px 'Bebas Neue', sans-serif`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(String(magnitude), cx, cy + size * 0.01);
   }
 
   function polygonPath(cx, cy, radius, sides, rotation) {
@@ -319,7 +309,7 @@
 
   function getMagnitudeScale(magnitude) {
     const m = Math.min(9, Math.max(1, Number(magnitude) || 1));
-    return 0.5 + ((m - 1) / 8) * 0.5;
+    return 0.68 + ((m - 1) / 8) * 0.32;
   }
 
   function createBadgePath(size) {

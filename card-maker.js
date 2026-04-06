@@ -3,6 +3,7 @@
   const SITE_URL = cfg.siteUrl || window.location.origin;
   const TEMPLATE_SRC = "./assets/seismic-card-template.png";
   const CRYSTAL_SHEET_SRC = "./assets/magnitude-crystals-sheet.jpg";
+  const CRYSTAL_9_SRC = "./assets/magnitude-9-ref.jpg";
 
   const CRYSTAL_SPRITES = {
     1: { sx: 20, sy: 26, sw: 145, sh: 250 },
@@ -43,6 +44,7 @@
   const ctx = el.cardCanvas.getContext("2d");
   let templateImage = null;
   let crystalSheetImage = null;
+  let crystal9Image = null;
   let uploadImage = null;
 
   init().catch((e) => {
@@ -56,6 +58,11 @@
       crystalSheetImage = await loadImage(CRYSTAL_SHEET_SRC);
     } catch {
       crystalSheetImage = null;
+    }
+    try {
+      crystal9Image = await loadImage(CRYSTAL_9_SRC);
+    } catch {
+      crystal9Image = null;
     }
     el.cardCanvas.width = templateImage.width;
     el.cardCanvas.height = templateImage.height;
@@ -141,6 +148,10 @@
   }
 
   function drawCrystal(magnitude) {
+    if (magnitude === 9 && crystal9Image) {
+      drawCrystalNineRef(magnitude);
+      return;
+    }
     if (crystalSheetImage && CRYSTAL_SPRITES[magnitude]) {
       drawCrystalFromSheet(magnitude);
       return;
@@ -151,7 +162,7 @@
   function drawCrystalFromSheet(magnitude) {
     const x = 1192;
     const y = 590;
-    const size = 142;
+    const size = 142 * getMagnitudeScale(magnitude);
     const sprite = CRYSTAL_SPRITES[magnitude];
 
     ctx.save();
@@ -186,10 +197,47 @@
     ctx.restore();
   }
 
+  function drawCrystalNineRef(magnitude) {
+    const x = 1192;
+    const y = 590;
+    const size = 142 * getMagnitudeScale(magnitude);
+
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(-0.02);
+
+    ctx.beginPath();
+    ctx.ellipse(0, size * 1.02, size * 0.66, size * 0.16, 0, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(0,0,0,0.34)";
+    ctx.fill();
+
+    const badgePath = createBadgePath(size);
+    ctx.save();
+    ctx.clip(badgePath);
+    ctx.drawImage(
+      crystal9Image,
+      0,
+      0,
+      crystal9Image.width,
+      crystal9Image.height,
+      -size * 0.66,
+      -size * 1.06,
+      size * 1.32,
+      size * 2.12
+    );
+    ctx.restore();
+
+    ctx.lineWidth = 5.5;
+    ctx.strokeStyle = "rgba(24,16,12,0.62)";
+    ctx.stroke(badgePath);
+
+    ctx.restore();
+  }
+
   function drawCrystalVector(magnitude) {
     const x = 1192;
     const y = 590;
-    const size = 138;
+    const size = 138 * getMagnitudeScale(magnitude);
     const color = MAG_COLORS[magnitude] || MAG_COLORS[8];
 
     ctx.save();
@@ -279,6 +327,11 @@
     ctx.fillText(String(magnitude), size * 0.1, -size * 0.66);
 
     ctx.restore();
+  }
+
+  function getMagnitudeScale(magnitude) {
+    const m = Math.min(9, Math.max(1, Number(magnitude) || 1));
+    return 0.5 + ((m - 1) / 8) * 0.5;
   }
 
   function createBadgePath(size) {

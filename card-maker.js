@@ -3,8 +3,8 @@
   const SITE_URL = cfg.siteUrl || window.location.origin;
   const TEMPLATE_SRC = "./assets/seismic-card-template.png";
   const CRYSTAL_9_SRC = "./assets/magnitude-9-ref.jpg";
-  const CRYSTAL_POS_X = 1018;
-  const CRYSTAL_POS_Y = 652;
+  const CRYSTAL_POS_X = 1010;
+  const CRYSTAL_POS_Y = 686;
   const CRYSTAL_BASE_SIZE = 125;
 
   const MAG_COLORS = {
@@ -291,7 +291,7 @@
 
   function drawCrystalTopNumber(octx, magnitude, w, h) {
     const cx = w * 0.5;
-    const cy = h * 0.12;
+    const cy = h * 0.128;
     const r = h * 0.105;
     const color = MAG_COLORS[magnitude] || "#58c7ff";
 
@@ -440,9 +440,9 @@
 
   function drawUploadBadge() {
     if (!uploadImage) return;
-    const x = 1020;
-    const y = 270;
-    const s = 120;
+    const x = 770;
+    const y = 760;
+    const s = 126;
 
     ctx.save();
     ctx.beginPath();
@@ -539,6 +539,16 @@
       tryPush(x + 1, y);
       tryPush(x, y - 1);
       tryPush(x, y + 1);
+    }
+
+    // Remove low-alpha JPEG halo so tinted rectangle behind badge is not visible.
+    for (let i = 0; i < px.length; i += 4) {
+      const a = px[i + 3];
+      if (a < 224) {
+        px[i + 3] = 0;
+      } else {
+        px[i + 3] = 255;
+      }
     }
 
     octx.putImageData(imgData, 0, 0);

@@ -3,7 +3,7 @@
   const SITE_URL = cfg.siteUrl || window.location.origin;
   const TEMPLATE_SRC = "./assets/seismic-card-template.png";
   const CRYSTAL_9_SRC = "./assets/magnitude-9-ref.jpg";
-  const CRYSTAL_POS_X = 1072;
+  const CRYSTAL_POS_X = 1046;
   const CRYSTAL_POS_Y = 652;
   const CRYSTAL_BASE_SIZE = 125;
 
@@ -107,9 +107,9 @@
     ctx.textBaseline = "middle";
 
     // Align text to the center of dark torso slots.
-    drawField(data.nick, 710, 430, 250, textColor, strokeColor);
-    drawField(data.country, 710, 526, 250, textColor, strokeColor);
-    drawField(String(data.messages), 710, 625, 250, textColor, strokeColor);
+    drawField(data.nick, 710, 436, 250, textColor, strokeColor);
+    drawField(data.country, 710, 540, 250, textColor, strokeColor);
+    drawField(String(data.messages), 710, 642, 250, textColor, strokeColor);
   }
 
   function drawField(text, x, y, maxWidth, color, strokeColor) {
@@ -156,7 +156,11 @@
     ctx.fill();
 
     const rendered = renderCrystalLayer(magnitude, targetW, targetH, size);
+    const clipPath = createBadgeWithCapPath(size);
+    ctx.save();
+    ctx.clip(clipPath);
     ctx.drawImage(rendered, dx, dy, targetW, targetH);
+    ctx.restore();
 
     ctx.restore();
   }
@@ -289,8 +293,8 @@
   }
 
   function drawCrystalTopNumber(octx, magnitude, w, h) {
-    const cx = w * 0.525;
-    const cy = h * 0.105;
+    const cx = w * 0.5;
+    const cy = h * 0.12;
     const r = h * 0.105;
     const color = MAG_COLORS[magnitude] || "#58c7ff";
 
@@ -362,6 +366,23 @@
     body.lineTo(-size * 0.62, -size * 0.12);
     body.closePath();
     return body;
+  }
+
+  function createBadgeWithCapPath(size) {
+    const path = new Path2D();
+    path.addPath(createBadgePath(size));
+    const cx = size * 0.1;
+    const cy = -size * 0.66;
+    const r = size * 0.26;
+    for (let i = 0; i < 6; i += 1) {
+      const a = -Math.PI / 2 + (i * Math.PI * 2) / 6;
+      const px = cx + Math.cos(a) * r;
+      const py = cy + Math.sin(a) * r;
+      if (i === 0) path.moveTo(px, py);
+      else path.lineTo(px, py);
+    }
+    path.closePath();
+    return path;
   }
 
   function drawSeismicGlyph(size) {

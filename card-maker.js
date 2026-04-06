@@ -3,8 +3,8 @@
   const SITE_URL = cfg.siteUrl || window.location.origin;
   const TEMPLATE_SRC = "./assets/seismic-card-template.png";
   const CRYSTAL_9_SRC = "./assets/magnitude-9-ref.jpg";
-  const CRYSTAL_POS_X = 1128;
-  const CRYSTAL_POS_Y = 640;
+  const CRYSTAL_POS_X = 1110;
+  const CRYSTAL_POS_Y = 652;
   const CRYSTAL_BASE_SIZE = 125;
 
   const MAG_COLORS = {
@@ -35,6 +35,7 @@
   const ctx = el.cardCanvas.getContext("2d");
   let templateImage = null;
   let crystal9Image = null;
+  let crystalCutoutImage = null;
   let uploadImage = null;
 
   init().catch((e) => {
@@ -46,8 +47,10 @@
     templateImage = await loadImage(TEMPLATE_SRC);
     try {
       crystal9Image = await loadImage(CRYSTAL_9_SRC);
+      crystalCutoutImage = buildCrystalCutout(crystal9Image);
     } catch {
       crystal9Image = null;
+      crystalCutoutImage = null;
     }
     el.cardCanvas.width = templateImage.width;
     el.cardCanvas.height = templateImage.height;
@@ -135,7 +138,7 @@
   }
 
   function drawCrystal(magnitude) {
-    if (crystal9Image) {
+    if (crystalCutoutImage) {
       drawCrystalFromRef(magnitude);
       return;
     }
@@ -146,6 +149,10 @@
     const x = CRYSTAL_POS_X;
     const y = CRYSTAL_POS_Y;
     const size = CRYSTAL_BASE_SIZE * getMagnitudeScale(magnitude);
+    const targetH = size * 2.18;
+    const targetW = targetH * (crystalCutoutImage.width / crystalCutoutImage.height);
+    const dx = -targetW / 2;
+    const dy = -targetH;
 
     ctx.save();
     ctx.translate(x, y);
@@ -156,23 +163,10 @@
     ctx.fillStyle = "rgba(0,0,0,0.34)";
     ctx.fill();
 
-    const badgePath = createBadgePath(size);
-    const dx = -size * 0.66;
-    const dy = -size * 1.06;
-    const dw = size * 1.32;
-    const dh = size * 2.12;
-
-    ctx.save();
-    ctx.clip(badgePath);
-    ctx.drawImage(crystal9Image, 0, 0, crystal9Image.width, crystal9Image.height, dx, dy, dw, dh);
+    ctx.drawImage(crystalCutoutImage, 0, 0, crystalCutoutImage.width, crystalCutoutImage.height, dx, dy, targetW, targetH);
     if (magnitude !== 9) {
-      tintCrystal(dx, dy, dw, dh, MAG_COLORS[magnitude] || "#56ccff");
+      tintCrystal(dx, dy, targetW, targetH, MAG_COLORS[magnitude] || "#56ccff");
     }
-    ctx.restore();
-
-    ctx.lineWidth = 5;
-    ctx.strokeStyle = "rgba(24,16,12,0.62)";
-    ctx.stroke(badgePath);
 
     drawCrystalNumber(magnitude, size);
 
@@ -407,6 +401,121 @@
       img.onerror = reject;
       img.src = src;
     });
+  }
+
+  function buildCrystalCutout(image) {
+    const off = document.createElement("canvas");
+    off.width = image.width;
+    off.height = image.height;
+    const octx = off.getContext("2d");
+    octx.drawImage(image, 0, 0);
+
+    const imgData = octx.getImageData(0, 0, off.width, off.height);
+    const px = imgData.data;
+    const w = off.width;
+    const h = off.height;
+    const bg = getBackgroundFromCorners(px, w, h);
+    const thr = 50;
+    const q = new Int32Array(w * h);
+    const seen = new Uint8Array(w * h);
+    let head = 0;
+    let tail = 0;
+
+    function tryPush(x, y) {
+      if (x < 0 || y < 0 || x >= w || y >= h) return;
+      const i = y * w + x;
+      if (seen[i]) return;
+      const p = i * 4;
+      const dr = Math.abs(px[p] - bg.r);
+      const dg = Math.abs(px[p + 1] - bg.g);
+      const db = Math.abs(px[p + 2] - bg.b);
+      if (dr + dg + db <= thr) {
+        seen[i] = 1;
+        q[tail++] = i;
+      }
+    }
+
+    for (let x = 0; x < w; x += 1) {
+      tryPush(x, 0);
+      tryPush(x, h - 1);
+    }
+    for (let y = 0; y < h; y += 1) {
+      tryPush(0, y);
+      tryPush(w - 1, y);
+    }
+
+    while (head < tail) {
+      const i = q[head++];
+      const p = i * 4;
+      px[p + 3] = 0;
+      const x = i % w;
+      const y = (i / w) | 0;
+      tryPush(x - 1, y);
+      tryPush(x + 1, y);
+      tryPush(x, y - 1);
+      tryPush(x, y + 1);
+    }
+
+    octx.putImageData(imgData, 0, 0);
+
+    const bounds = getOpaqueBounds(px, w, h);
+    if (!bounds) return off;
+
+    const out = document.createElement("canvas");
+    out.width = bounds.w;
+    out.height = bounds.h;
+    const outCtx = out.getContext("2d");
+    outCtx.drawImage(off, bounds.x, bounds.y, bounds.w, bounds.h, 0, 0, bounds.w, bounds.h);
+    return out;
+  }
+
+  function getBackgroundFromCorners(px, w, h) {
+    const samples = [
+      0,
+      (w - 1) * 4,
+      (w * (h - 1)) * 4,
+      (w * h - 1) * 4
+    ];
+    let r = 0;
+    let g = 0;
+    let b = 0;
+    for (const s of samples) {
+      r += px[s];
+      g += px[s + 1];
+      b += px[s + 2];
+    }
+    return {
+      r: r / samples.length,
+      g: g / samples.length,
+      b: b / samples.length
+    };
+  }
+
+  function getOpaqueBounds(px, w, h) {
+    let minX = w;
+    let minY = h;
+    let maxX = -1;
+    let maxY = -1;
+
+    for (let y = 0; y < h; y += 1) {
+      for (let x = 0; x < w; x += 1) {
+        const a = px[(y * w + x) * 4 + 3];
+        if (a > 12) {
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+      }
+    }
+
+    if (maxX < minX || maxY < minY) return null;
+    return {
+      x: minX,
+      y: minY,
+      w: maxX - minX + 1,
+      h: maxY - minY + 1
+    };
   }
 
   function shade(hex, factor) {

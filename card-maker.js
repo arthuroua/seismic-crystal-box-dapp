@@ -108,8 +108,8 @@
 
     // Align text to the center of dark torso slots.
     drawField(data.nick, 710, 430, 250, textColor, strokeColor);
-    drawField(data.country, 710, 528, 250, textColor, strokeColor);
-    drawField(String(data.messages), 710, 612, 250, textColor, strokeColor);
+    drawField(data.country, 710, 526, 250, textColor, strokeColor);
+    drawField(String(data.messages), 710, 625, 250, textColor, strokeColor);
   }
 
   function drawField(text, x, y, maxWidth, color, strokeColor) {
@@ -289,9 +289,9 @@
   }
 
   function drawCrystalTopNumber(octx, magnitude, w, h) {
-    const cx = w * 0.53;
-    const cy = h * 0.16;
-    const r = h * 0.115;
+    const cx = w * 0.525;
+    const cy = h * 0.105;
+    const r = h * 0.105;
     const color = MAG_COLORS[magnitude] || "#58c7ff";
 
     octx.beginPath();
@@ -324,7 +324,7 @@
       const lum = (max + min) * 0.5;
 
       // Remove light/neutral background tones while keeping saturated crystal pixels.
-      if ((sat < 0.18 && lum > 0.32) || (sat < 0.1 && lum > 0.2)) {
+      if ((sat < 0.24 && lum > 0.30) || (sat < 0.12 && lum > 0.2)) {
         px[i + 3] = 0;
       }
     }
@@ -444,7 +444,7 @@
     const w = off.width;
     const h = off.height;
     const bg = getBackgroundFromCorners(px, w, h);
-    const thr = 50;
+    const thr = 120;
     const q = new Int32Array(w * h);
     const seen = new Uint8Array(w * h);
     let head = 0;

@@ -315,6 +315,7 @@
     }
     applyCrystalShine(octx, magnitude, w, h);
     drawCrystalTopNumber(octx, magnitude, w, h);
+    applyCrystalSilhouetteMask(octx, w, h);
     return off;
   }
 
@@ -357,7 +358,8 @@
   function applyCrystalShine(octx, magnitude, w, h) {
     const color = MAG_COLORS[magnitude] || "#58c7ff";
     octx.save();
-    octx.globalCompositeOperation = "screen";
+    // Restrict all shine to already-opaque crystal pixels.
+    octx.globalCompositeOperation = "source-atop";
 
     // Global glossy lift.
     const gloss = octx.createLinearGradient(0, 0, w, h);
@@ -397,9 +399,44 @@
     }
 
     octx.restore();
-    // Keep shine strictly within crystal silhouette.
-    octx.globalCompositeOperation = "source-atop";
-    octx.globalCompositeOperation = "source-over";
+  }
+
+  function applyCrystalSilhouetteMask(octx, w, h) {
+    octx.save();
+    octx.globalCompositeOperation = "destination-in";
+    drawCrystalSilhouettePath(octx, w, h);
+    octx.fillStyle = "rgba(255,255,255,1)";
+    octx.fill();
+    octx.restore();
+  }
+
+  function drawCrystalSilhouettePath(targetCtx, w, h) {
+    const p = [
+      [0.50, 0.008],
+      [0.67, 0.070],
+      [0.76, 0.195],
+      [0.70, 0.300],
+      [0.91, 0.390],
+      [0.89, 0.630],
+      [0.76, 0.770],
+      [0.67, 0.930],
+      [0.50, 0.996],
+      [0.33, 0.930],
+      [0.24, 0.770],
+      [0.11, 0.630],
+      [0.09, 0.390],
+      [0.30, 0.300],
+      [0.24, 0.195],
+      [0.33, 0.070]
+    ];
+    targetCtx.beginPath();
+    for (let i = 0; i < p.length; i += 1) {
+      const x = w * p[i][0];
+      const y = h * p[i][1];
+      if (i === 0) targetCtx.moveTo(x, y);
+      else targetCtx.lineTo(x, y);
+    }
+    targetCtx.closePath();
   }
 
   function stripEdgeByCornerDistance(octx, w, h, threshold) {
@@ -728,9 +765,7 @@
 
     const isMetaMask = (p) => Boolean(p?.isMetaMask) && !p?.isBraveWallet;
     const isRabby = (p) => Boolean(p?.isRabby);
-    const isOkx = (p) => Boolean(p?.isOkxWallet || p?.isOKExWallet);
-
-    return providers.find(isMetaMask) || providers.find(isRabby) || providers.find((p) => !isOkx(p)) || providers[0];
+    return providers.find(isMetaMask) || providers.find(isRabby) || null;
   }
 
   function loadImage(src) {

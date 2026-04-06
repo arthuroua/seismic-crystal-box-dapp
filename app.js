@@ -42,6 +42,8 @@ const I18N = {
     switchWallet: "Змінити гаманець",
     disconnect: "Відключити",
     addNetwork: "Додати Seismic Network",
+    cardMakerLink: "Post Card Builder + Mint",
+    openCardMaker: "Відкрити Card Builder + Mint",
     dailyCheckIn: "Щоденний Check-in (+1 Box)",
     openBox: "Відкрити бокс",
     mintRare: "Мінт за 5 Rare",
@@ -96,6 +98,8 @@ const I18N = {
     switchWallet: "Switch Wallet",
     disconnect: "Disconnect",
     addNetwork: "Add Seismic Network",
+    cardMakerLink: "Post Card Builder + Mint",
+    openCardMaker: "Open Card Builder + Mint",
     dailyCheckIn: "Daily Check-in (+1 Box)",
     openBox: "Open Box",
     mintRare: "Mint for 5 Rare",
@@ -210,6 +214,8 @@ const el = {
 
   explorerLink: document.getElementById("explorerLink"),
   faucetLink: document.getElementById("faucetLink"),
+  cardMakerLink: document.getElementById("cardMakerLink"),
+  openCardMakerBtn: document.getElementById("openCardMakerBtn"),
   logBox: document.getElementById("logBox")
 };
 
@@ -308,6 +314,8 @@ function applyLocale() {
   el.switchWalletBtn.textContent = tr("switchWallet");
   el.disconnectBtn.textContent = tr("disconnect");
   el.addNetworkBtn.textContent = tr("addNetwork");
+  if (el.cardMakerLink) el.cardMakerLink.textContent = tr("cardMakerLink");
+  if (el.openCardMakerBtn) el.openCardMakerBtn.textContent = tr("openCardMaker");
   el.checkInBtn.textContent = tr("dailyCheckIn");
   el.openBoxBtn.textContent = tr("openBox");
   el.mintRareBtn.textContent = tr("mintRare");

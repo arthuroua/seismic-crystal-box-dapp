@@ -242,6 +242,13 @@ h1 {
   background: linear-gradient(130deg, #772038 0%, #4d1626 100%);
 }
 
+.btn-open-card {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  margin-top: 4px;
+}
+
 .progress-wrap {
   width: 100%;
   height: 14px;

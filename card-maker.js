@@ -89,8 +89,44 @@
     ctx.clearRect(0, 0, w, h);
     ctx.drawImage(templateImage, 0, 0, w, h);
 
+    drawMagnitudeEyes(data.magnitude);
     drawOverlayText(data);
     drawCrystal(data.magnitude);
+  }
+
+  function drawMagnitudeEyes(magnitude) {
+    const color = MAG_COLORS[magnitude] || "#FF66FF";
+    const eyes = [
+      { x: 713, y: 154, r: 22 },
+      { x: 839, y: 165, r: 20 }
+    ];
+
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+
+    for (const eye of eyes) {
+      // Outer aura.
+      const aura = ctx.createRadialGradient(eye.x, eye.y, eye.r * 0.2, eye.x, eye.y, eye.r * 2.4);
+      aura.addColorStop(0, "rgba(255,255,255,0.62)");
+      aura.addColorStop(0.35, hexToRgba(color, 0.38));
+      aura.addColorStop(1, hexToRgba(color, 0));
+      ctx.fillStyle = aura;
+      ctx.beginPath();
+      ctx.arc(eye.x, eye.y, eye.r * 2.4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Core eye light.
+      const core = ctx.createRadialGradient(eye.x - eye.r * 0.25, eye.y - eye.r * 0.25, 1, eye.x, eye.y, eye.r);
+      core.addColorStop(0, "rgba(255,255,255,0.95)");
+      core.addColorStop(0.45, hexToRgba(color, 0.9));
+      core.addColorStop(1, hexToRgba(color, 0.28));
+      ctx.fillStyle = core;
+      ctx.beginPath();
+      ctx.arc(eye.x, eye.y, eye.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.restore();
   }
 
   function drawOverlayText(data) {
@@ -718,5 +754,13 @@
     const g = Math.min(255, Math.max(0, Math.round(parseInt(c.slice(2, 4), 16) * factor)));
     const b = Math.min(255, Math.max(0, Math.round(parseInt(c.slice(4, 6), 16) * factor)));
     return `rgb(${r}, ${g}, ${b})`;
+  }
+
+  function hexToRgba(hex, alpha) {
+    const c = hex.replace("#", "");
+    const r = parseInt(c.slice(0, 2), 16);
+    const g = parseInt(c.slice(2, 4), 16);
+    const b = parseInt(c.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
 })();

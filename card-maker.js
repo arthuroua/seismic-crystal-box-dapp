@@ -93,9 +93,10 @@
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
 
-    drawField(data.nick, 560, 391, 350, textColor, strokeColor);
-    drawField(data.country, 560, 476, 350, textColor, strokeColor);
-    drawField(String(data.messages), 560, 560, 350, textColor, strokeColor);
+    // Align text to the center of dark torso slots.
+    drawField(data.nick, 560, 408, 325, textColor, strokeColor);
+    drawField(data.country, 560, 493, 325, textColor, strokeColor);
+    drawField(String(data.messages), 560, 578, 325, textColor, strokeColor);
 
     ctx.font = "700 56px 'Bebas Neue', sans-serif";
     ctx.lineWidth = 8;
@@ -108,7 +109,12 @@
 
   function drawField(text, x, y, maxWidth, color, strokeColor) {
     const safe = String(text || "-");
-    ctx.font = "700 52px 'Space Grotesk', sans-serif";
+    let size = 54;
+    ctx.font = `700 ${size}px 'Space Grotesk', sans-serif`;
+    while (ctx.measureText(safe).width > maxWidth && size > 34) {
+      size -= 2;
+      ctx.font = `700 ${size}px 'Space Grotesk', sans-serif`;
+    }
     ctx.lineWidth = 8;
     ctx.strokeStyle = strokeColor;
     ctx.strokeText(safe, x, y, maxWidth);
@@ -117,9 +123,9 @@
   }
 
   function drawCrystal(magnitude) {
-    const x = 1190;
-    const y = 585;
-    const size = 144;
+    const x = 1192;
+    const y = 590;
+    const size = 138;
     const color = MAG_COLORS[magnitude] || MAG_COLORS[8];
 
     ctx.save();
@@ -132,15 +138,15 @@
     ctx.fillStyle = "rgba(0,0,0,0.34)";
     ctx.fill();
 
-    // Main body (badge-like crystal)
+    // Main body (badge-like crystal, close to reference style)
     const body = new Path2D();
-    body.moveTo(-size * 0.34, -size * 0.54);
-    body.lineTo(size * 0.22, -size * 0.62);
-    body.lineTo(size * 0.58, -size * 0.2);
-    body.lineTo(size * 0.45, size * 0.62);
-    body.lineTo(-size * 0.04, size * 0.92);
-    body.lineTo(-size * 0.48, size * 0.64);
-    body.lineTo(-size * 0.62, -size * 0.08);
+    body.moveTo(-size * 0.3, -size * 0.6);
+    body.lineTo(size * 0.18, -size * 0.62);
+    body.lineTo(size * 0.56, -size * 0.22);
+    body.lineTo(size * 0.44, size * 0.58);
+    body.lineTo(-size * 0.06, size * 0.9);
+    body.lineTo(-size * 0.5, size * 0.62);
+    body.lineTo(-size * 0.62, -size * 0.12);
     body.closePath();
 
     const bodyGrad = ctx.createLinearGradient(-size * 0.7, -size * 0.6, size * 0.6, size * 0.9);
@@ -155,33 +161,33 @@
 
     // Side facets
     const leftFacet = new Path2D();
-    leftFacet.moveTo(-size * 0.53, -size * 0.04);
-    leftFacet.lineTo(-size * 0.39, -size * 0.46);
-    leftFacet.lineTo(-size * 0.25, -size * 0.43);
-    leftFacet.lineTo(-size * 0.36, size * 0.61);
-    leftFacet.lineTo(-size * 0.52, size * 0.46);
+    leftFacet.moveTo(-size * 0.53, -size * 0.08);
+    leftFacet.lineTo(-size * 0.37, -size * 0.5);
+    leftFacet.lineTo(-size * 0.23, -size * 0.46);
+    leftFacet.lineTo(-size * 0.34, size * 0.58);
+    leftFacet.lineTo(-size * 0.5, size * 0.44);
     leftFacet.closePath();
     ctx.fillStyle = shade(color, 0.72);
     ctx.fill(leftFacet);
 
     const rightFacet = new Path2D();
-    rightFacet.moveTo(size * 0.23, -size * 0.52);
-    rightFacet.lineTo(size * 0.45, -size * 0.25);
-    rightFacet.lineTo(size * 0.36, size * 0.55);
-    rightFacet.lineTo(size * 0.16, size * 0.71);
-    rightFacet.lineTo(size * 0.03, -size * 0.34);
+    rightFacet.moveTo(size * 0.2, -size * 0.54);
+    rightFacet.lineTo(size * 0.44, -size * 0.24);
+    rightFacet.lineTo(size * 0.34, size * 0.53);
+    rightFacet.lineTo(size * 0.14, size * 0.69);
+    rightFacet.lineTo(size * 0.01, -size * 0.36);
     rightFacet.closePath();
     ctx.fillStyle = shade(color, 0.66);
     ctx.fill(rightFacet);
 
     // Top plate for magnitude number
     const cap = new Path2D();
-    cap.moveTo(-size * 0.05, -size * 0.98);
-    cap.lineTo(size * 0.28, -size * 0.87);
-    cap.lineTo(size * 0.42, -size * 0.63);
-    cap.lineTo(size * 0.25, -size * 0.42);
-    cap.lineTo(-size * 0.06, -size * 0.44);
-    cap.lineTo(-size * 0.2, -size * 0.67);
+    cap.moveTo(-size * 0.02, -size * 0.98);
+    cap.lineTo(size * 0.26, -size * 0.88);
+    cap.lineTo(size * 0.4, -size * 0.65);
+    cap.lineTo(size * 0.22, -size * 0.43);
+    cap.lineTo(-size * 0.07, -size * 0.44);
+    cap.lineTo(-size * 0.19, -size * 0.69);
     cap.closePath();
     const capGrad = ctx.createLinearGradient(-size * 0.2, -size, size * 0.4, -size * 0.35);
     capGrad.addColorStop(0, shade(color, 1.22));
@@ -196,7 +202,7 @@
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.strokeStyle = shade(color, 1.5);
-    ctx.lineWidth = 9;
+    ctx.lineWidth = 8.5;
     drawSeismicGlyph(size);
 
     ctx.strokeStyle = shade(color, 0.92);
@@ -214,7 +220,7 @@
     ctx.font = "700 56px 'Bebas Neue', sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(String(magnitude), size * 0.12, -size * 0.66);
+    ctx.fillText(String(magnitude), size * 0.1, -size * 0.66);
 
     ctx.restore();
   }

@@ -119,9 +119,9 @@
     ctx.textBaseline = "middle";
 
     // Align text to the center of dark torso slots.
-    drawField(data.nick, 632, 408, 248, textColor, strokeColor);
-    drawField(data.country, 632, 493, 248, textColor, strokeColor);
-    drawField(String(data.messages), 632, 578, 248, textColor, strokeColor);
+    drawField(data.nick, 710, 430, 250, textColor, strokeColor);
+    drawField(data.country, 710, 515, 250, textColor, strokeColor);
+    drawField(String(data.messages), 710, 600, 250, textColor, strokeColor);
 
     ctx.font = "700 56px 'Bebas Neue', sans-serif";
     ctx.lineWidth = 8;
@@ -134,17 +134,19 @@
 
   function drawField(text, x, y, maxWidth, color, strokeColor) {
     const safe = String(text || "-");
-    let size = 54;
+    let size = 50;
     ctx.font = `700 ${size}px 'Space Grotesk', sans-serif`;
-    while (ctx.measureText(safe).width > maxWidth && size > 34) {
+    while (ctx.measureText(safe).width > maxWidth && size > 32) {
       size -= 2;
       ctx.font = `700 ${size}px 'Space Grotesk', sans-serif`;
     }
-    ctx.lineWidth = 8;
+    ctx.textAlign = "center";
+    ctx.lineWidth = 6;
     ctx.strokeStyle = strokeColor;
     ctx.strokeText(safe, x, y, maxWidth);
     ctx.fillStyle = color;
     ctx.fillText(safe, x, y, maxWidth);
+    ctx.textAlign = "left";
   }
 
   function drawCrystal(magnitude) {

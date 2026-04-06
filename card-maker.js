@@ -3,7 +3,7 @@
   const SITE_URL = cfg.siteUrl || window.location.origin;
   const TEMPLATE_SRC = "./assets/seismic-card-template.png";
   const CRYSTAL_9_SRC = "./assets/magnitude-9-ref.jpg";
-  const CRYSTAL_POS_X = 1092;
+  const CRYSTAL_POS_X = 1072;
   const CRYSTAL_POS_Y = 652;
   const CRYSTAL_BASE_SIZE = 125;
 
@@ -108,16 +108,8 @@
 
     // Align text to the center of dark torso slots.
     drawField(data.nick, 710, 430, 250, textColor, strokeColor);
-    drawField(data.country, 710, 523, 250, textColor, strokeColor);
-    drawField(String(data.messages), 710, 608, 250, textColor, strokeColor);
-
-    ctx.font = "700 56px 'Bebas Neue', sans-serif";
-    ctx.lineWidth = 8;
-    ctx.strokeStyle = strokeColor;
-    const magText = `${data.magnitude}.0`;
-    ctx.strokeText(magText, 885, 667);
-    ctx.fillStyle = "#F3D8A8";
-    ctx.fillText(magText, 885, 667);
+    drawField(data.country, 710, 532, 250, textColor, strokeColor);
+    drawField(String(data.messages), 710, 617, 250, textColor, strokeColor);
   }
 
   function drawField(text, x, y, maxWidth, color, strokeColor) {
@@ -163,11 +155,8 @@
     ctx.fillStyle = "rgba(0,0,0,0.34)";
     ctx.fill();
 
-    ctx.drawImage(crystalCutoutImage, 0, 0, crystalCutoutImage.width, crystalCutoutImage.height, dx, dy, targetW, targetH);
-    if (magnitude !== 9) {
-      tintCrystal(dx, dy, targetW, targetH, MAG_COLORS[magnitude] || "#56ccff");
-    }
-    maskCrystalTopNumber(size, magnitude);
+    const rendered = renderCrystalLayer(magnitude, targetW, targetH, size);
+    ctx.drawImage(rendered, dx, dy, targetW, targetH);
 
     ctx.restore();
   }
@@ -267,44 +256,73 @@
     ctx.restore();
   }
 
-  function tintCrystal(x, y, w, h, color) {
-    ctx.save();
-    // Apply tint only where crystal pixels already exist (no colored rectangle background).
-    ctx.globalCompositeOperation = "source-atop";
-    ctx.globalAlpha = 0.72;
-    ctx.fillStyle = color;
-    ctx.fillRect(x, y, w, h);
-    ctx.globalCompositeOperation = "source-atop";
-    ctx.globalAlpha = 0.16;
-    ctx.fillStyle = color;
-    ctx.fillRect(x, y, w, h);
-    ctx.restore();
+  function renderCrystalLayer(magnitude, targetW, targetH, size) {
+    const w = Math.max(1, Math.round(targetW));
+    const h = Math.max(1, Math.round(targetH));
+    const off = document.createElement("canvas");
+    off.width = w;
+    off.height = h;
+    const octx = off.getContext("2d");
+
+    octx.drawImage(crystalCutoutImage, 0, 0, crystalCutoutImage.width, crystalCutoutImage.height, 0, 0, w, h);
+
+    if (magnitude !== 9) {
+      tintCrystalOnLayer(octx, magnitude, w, h);
+    }
+    drawCrystalTopNumber(octx, size, magnitude, targetW, targetH);
+    return off;
   }
 
-  function maskCrystalTopNumber(size, magnitude) {
-    const cx = size * 0.1;
-    const cy = -size * 0.66;
-    const r = size * 0.26;
+  function tintCrystalOnLayer(octx, magnitude, w, h) {
+    const color = MAG_COLORS[magnitude] || "#56ccff";
+    octx.save();
+    octx.globalCompositeOperation = "source-atop";
+    octx.globalAlpha = 0.74;
+    octx.fillStyle = color;
+    octx.fillRect(0, 0, w, h);
+    octx.globalCompositeOperation = "multiply";
+    octx.globalAlpha = 0.12;
+    octx.fillStyle = color;
+    octx.fillRect(0, 0, w, h);
+    octx.restore();
+  }
+
+  function drawCrystalTopNumber(octx, size, magnitude, targetW, targetH) {
+    const sx = targetW / Math.max(1, octx.canvas.width);
+    const sy = targetH / Math.max(1, octx.canvas.height);
+    const cx = (size * 0.1 + targetW / 2) / sx;
+    const cy = (-size * 0.66 + targetH) / sy;
+    const r = (size * 0.28) / ((sx + sy) / 2);
     const color = MAG_COLORS[magnitude] || "#58c7ff";
 
-    ctx.beginPath();
-    polygonPath(cx, cy, r, 6, -Math.PI / 2);
-    ctx.fillStyle = shade(color, 1.08);
-    ctx.fill();
-    ctx.lineWidth = Math.max(2, size * 0.06);
-    ctx.strokeStyle = "rgba(20, 34, 50, 0.62)";
-    ctx.stroke();
+    octx.beginPath();
+    polygonPathCtx(octx, cx, cy, r, 6, -Math.PI / 2);
+    octx.fillStyle = shade(color, 1.08);
+    octx.fill();
+    octx.lineWidth = Math.max(2, (size * 0.06) / ((sx + sy) / 2));
+    octx.strokeStyle = "rgba(20, 34, 50, 0.62)";
+    octx.stroke();
+
+    octx.fillStyle = "rgba(18, 28, 42, 0.86)";
+    octx.font = `700 ${Math.max(16, size * 0.33)}px 'Bebas Neue', sans-serif`;
+    octx.textAlign = "center";
+    octx.textBaseline = "middle";
+    octx.fillText(String(magnitude), cx, cy + size * 0.01);
   }
 
   function polygonPath(cx, cy, radius, sides, rotation) {
+    polygonPathCtx(ctx, cx, cy, radius, sides, rotation);
+  }
+
+  function polygonPathCtx(targetCtx, cx, cy, radius, sides, rotation) {
     for (let i = 0; i < sides; i += 1) {
       const a = rotation + (i * Math.PI * 2) / sides;
       const px = cx + Math.cos(a) * radius;
       const py = cy + Math.sin(a) * radius;
-      if (i === 0) ctx.moveTo(px, py);
-      else ctx.lineTo(px, py);
+      if (i === 0) targetCtx.moveTo(px, py);
+      else targetCtx.lineTo(px, py);
     }
-    ctx.closePath();
+    targetCtx.closePath();
   }
 
   function getMagnitudeScale(magnitude) {

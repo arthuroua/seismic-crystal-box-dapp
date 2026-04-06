@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Seismic Post Card Builder</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./card-maker.css" />
+  </head>
+  <body>
+    <main class="wrap">
+      <section class="panel">
+        <h1>Seismic Info Card</h1>
+        <p class="sub">Create your share card for X using robot template, stats and magnitude crystal.</p>
+
+        <div class="form-grid">
+          <label>
+            Nick
+            <input id="nickInput" type="text" maxlength="22" placeholder="arthuro" />
+          </label>
+          <label>
+            Country
+            <input id="countryInput" type="text" maxlength="24" placeholder="Ukraine" />
+          </label>
+          <label>
+            Discord messages
+            <input id="messagesInput" type="number" min="0" max="99999999" step="1" placeholder="12345" />
+          </label>
+          <label>
+            Magnitude
+            <select id="magnitudeInput">
+              <option value="1">1.0</option>
+              <option value="2">2.0</option>
+              <option value="3">3.0</option>
+              <option value="4">4.0</option>
+              <option value="5">5.0</option>
+              <option value="6">6.0</option>
+              <option value="7">7.0</option>
+              <option value="8" selected>8.0</option>
+              <option value="9">9.0</option>
+            </select>
+          </label>
+          <label class="wide">
+            Your image/logo (optional)
+            <input id="photoInput" type="file" accept="image/*" />
+          </label>
+        </div>
+
+        <div class="actions">
+          <button id="renderBtn" class="btn">Generate Card</button>
+          <button id="downloadBtn" class="btn btn-secondary">Download PNG</button>
+          <button id="shareBtn" class="btn btn-primary">Share to X</button>
+          <a class="btn btn-ghost" href="./index.html">Back to dApp</a>
+        </div>
+        <p id="hintText" class="hint"></p>
+      </section>
+
+      <section class="panel preview">
+        <canvas id="cardCanvas" width="1536" height="1024"></canvas>
+      </section>
+    </main>
+
+    <script src="./config.js"></script>
+    <script src="./card-maker.js"></script>
+  </body>
+</html>

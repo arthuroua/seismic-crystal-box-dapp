@@ -179,11 +179,6 @@
     ctx.translate(x, y);
     ctx.rotate(-0.08);
 
-    ctx.beginPath();
-    ctx.ellipse(0, size * 1.02, size * 0.66, size * 0.16, 0, 0, Math.PI * 2);
-    ctx.fillStyle = "rgba(0,0,0,0.34)";
-    ctx.fill();
-
     // Soft emissive glow around badge.
     const glowColor = MAG_COLORS[magnitude] || "#56ccff";
     ctx.beginPath();
@@ -315,7 +310,6 @@
     }
     applyCrystalShine(octx, magnitude, w, h);
     drawCrystalTopNumber(octx, magnitude, w, h);
-    applyCrystalSilhouetteMask(octx, w, h);
     return off;
   }
 
@@ -358,8 +352,7 @@
   function applyCrystalShine(octx, magnitude, w, h) {
     const color = MAG_COLORS[magnitude] || "#58c7ff";
     octx.save();
-    // Restrict all shine to already-opaque crystal pixels.
-    octx.globalCompositeOperation = "source-atop";
+    octx.globalCompositeOperation = "screen";
 
     // Global glossy lift.
     const gloss = octx.createLinearGradient(0, 0, w, h);
@@ -399,44 +392,9 @@
     }
 
     octx.restore();
-  }
-
-  function applyCrystalSilhouetteMask(octx, w, h) {
-    octx.save();
-    octx.globalCompositeOperation = "destination-in";
-    drawCrystalSilhouettePath(octx, w, h);
-    octx.fillStyle = "rgba(255,255,255,1)";
-    octx.fill();
-    octx.restore();
-  }
-
-  function drawCrystalSilhouettePath(targetCtx, w, h) {
-    const p = [
-      [0.50, 0.008],
-      [0.67, 0.070],
-      [0.76, 0.195],
-      [0.70, 0.300],
-      [0.91, 0.390],
-      [0.89, 0.630],
-      [0.76, 0.770],
-      [0.67, 0.930],
-      [0.50, 0.996],
-      [0.33, 0.930],
-      [0.24, 0.770],
-      [0.11, 0.630],
-      [0.09, 0.390],
-      [0.30, 0.300],
-      [0.24, 0.195],
-      [0.33, 0.070]
-    ];
-    targetCtx.beginPath();
-    for (let i = 0; i < p.length; i += 1) {
-      const x = w * p[i][0];
-      const y = h * p[i][1];
-      if (i === 0) targetCtx.moveTo(x, y);
-      else targetCtx.lineTo(x, y);
-    }
-    targetCtx.closePath();
+    // Keep shine strictly within crystal silhouette.
+    octx.globalCompositeOperation = "source-atop";
+    octx.globalCompositeOperation = "source-over";
   }
 
   function stripEdgeByCornerDistance(octx, w, h, threshold) {

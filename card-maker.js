@@ -8,6 +8,9 @@
   const CRYSTAL_POS_X = 1010;
   const CRYSTAL_POS_Y = 686;
   const CRYSTAL_BASE_SIZE = 125;
+  const HEAD_CENTER_X = 776;
+  const HEAD_CENTER_Y = 168;
+  const HEAD_RADIUS = 116;
   const CARD_MINTER_ABI = [
     "function mintCard(string metadataURI) returns (uint256 tokenId)",
     "function nextTokenId() view returns (uint256)"
@@ -30,6 +33,7 @@
     countryInput: document.getElementById("countryInput"),
     messagesInput: document.getElementById("messagesInput"),
     magnitudeInput: document.getElementById("magnitudeInput"),
+    headAvatarInput: document.getElementById("headAvatarInput"),
     renderBtn: document.getElementById("renderBtn"),
     downloadBtn: document.getElementById("downloadBtn"),
     shareBtn: document.getElementById("shareBtn"),
@@ -42,6 +46,8 @@
   let templateImage = null;
   let crystal9Image = null;
   let crystalCutoutImage = null;
+  let headAvatarImage = null;
+  let headAvatarObjectUrl = null;
 
   init().catch((e) => {
     console.error(e);
@@ -64,6 +70,7 @@
     el.downloadBtn.addEventListener("click", downloadCard);
     el.shareBtn.addEventListener("click", shareToX);
     el.mintBtn?.addEventListener("click", mintCardNft);
+    el.headAvatarInput?.addEventListener("change", onHeadAvatarChange);
 
     renderCard();
   }
@@ -89,9 +96,67 @@
     ctx.clearRect(0, 0, w, h);
     ctx.drawImage(templateImage, 0, 0, w, h);
 
+    drawHeadAvatar();
     drawMagnitudeEyes(data.magnitude);
     drawOverlayText(data);
     drawCrystal(data.magnitude);
+  }
+
+  async function onHeadAvatarChange(event) {
+    const file = event?.target?.files?.[0];
+    if (!file) {
+      headAvatarImage = null;
+      if (headAvatarObjectUrl) {
+        URL.revokeObjectURL(headAvatarObjectUrl);
+        headAvatarObjectUrl = null;
+      }
+      renderCard();
+      return;
+    }
+
+    try {
+      if (headAvatarObjectUrl) {
+        URL.revokeObjectURL(headAvatarObjectUrl);
+        headAvatarObjectUrl = null;
+      }
+      const objectUrl = URL.createObjectURL(file);
+      const img = await loadImage(objectUrl);
+      headAvatarImage = img;
+      headAvatarObjectUrl = objectUrl;
+      renderCard();
+      el.hintText.textContent = "Head avatar loaded.";
+    } catch (e) {
+      console.error(e);
+      headAvatarImage = null;
+      el.hintText.textContent = "Failed to load avatar image.";
+    }
+  }
+
+  function drawHeadAvatar() {
+    if (!headAvatarImage) return;
+
+    const cx = HEAD_CENTER_X;
+    const cy = HEAD_CENTER_Y;
+    const r = HEAD_RADIUS;
+    const srcW = headAvatarImage.width;
+    const srcH = headAvatarImage.height;
+    const srcSide = Math.min(srcW, srcH);
+    const sx = (srcW - srcSide) * 0.5;
+    const sy = (srcH - srcSide) * 0.5;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.drawImage(headAvatarImage, sx, sy, srcSide, srcSide, cx - r, cy - r, r * 2, r * 2);
+
+    // Slight darkening near edge so avatar blends with robot metal shell.
+    const edgeShade = ctx.createRadialGradient(cx, cy, r * 0.56, cx, cy, r);
+    edgeShade.addColorStop(0, "rgba(0,0,0,0)");
+    edgeShade.addColorStop(1, "rgba(0,0,0,0.34)");
+    ctx.fillStyle = edgeShade;
+    ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+    ctx.restore();
   }
 
   function drawMagnitudeEyes(magnitude) {
@@ -292,13 +357,74 @@
     removeNeutralBackground(octx, w, h);
     stripEdgeNeutralBackground(octx, w, h);
     stripEdgeByCornerDistance(octx, w, h, 102);
+    const crystalMask = buildCrystalPixelMask(octx, w, h);
+    applyPixelMask(octx, w, h, crystalMask);
 
     if (magnitude !== 9) {
       tintCrystalOnLayer(octx, magnitude, w, h);
     }
     applyCrystalShine(octx, magnitude, w, h);
     drawCrystalTopNumber(octx, magnitude, w, h);
+    applyPixelMask(octx, w, h, crystalMask);
     return off;
+  }
+
+  function buildCrystalPixelMask(octx, w, h) {
+    const img = octx.getImageData(0, 0, w, h);
+    const px = img.data;
+    const mask = new Uint8Array(w * h);
+    let keepCount = 0;
+
+    for (let y = 0; y < h; y += 1) {
+      for (let x = 0; x < w; x += 1) {
+        const idx = y * w + x;
+        const p = idx * 4;
+        const a = px[p + 3];
+        if (!a) continue;
+
+        const r = px[p];
+        const g = px[p + 1];
+        const b = px[p + 2];
+        const hsv = rgbToHsv(r, g, b);
+        const hue = hsv.h;
+        const sat = hsv.s;
+        const val = hsv.v;
+
+        const isBlueBody = sat >= 0.2 && hue >= 0.45 && hue <= 0.72;
+        const isBrightSpec = sat <= 0.18 && val >= 0.74;
+        const isCenterSymbol =
+          x >= w * 0.28 &&
+          x <= w * 0.72 &&
+          y >= h * 0.34 &&
+          y <= h * 0.75 &&
+          sat >= 0.16 &&
+          sat <= 0.78 &&
+          hue >= 0.05 &&
+          hue <= 0.18 &&
+          val >= 0.15 &&
+          val <= 0.65;
+
+        if (isBlueBody || isBrightSpec || isCenterSymbol) {
+          mask[idx] = 1;
+          keepCount += 1;
+        }
+      }
+    }
+
+    if (keepCount < 100) return null;
+    return mask;
+  }
+
+  function applyPixelMask(octx, w, h, mask) {
+    if (!mask) return;
+    const img = octx.getImageData(0, 0, w, h);
+    const px = img.data;
+    for (let i = 0; i < mask.length; i += 1) {
+      if (!mask[i]) {
+        px[i * 4 + 3] = 0;
+      }
+    }
+    octx.putImageData(img, 0, 0);
   }
 
   function tintCrystalOnLayer(octx, magnitude, w, h) {
@@ -845,6 +971,26 @@
       w: maxX - minX + 1,
       h: maxY - minY + 1
     };
+  }
+
+  function rgbToHsv(r, g, b) {
+    const rn = r / 255;
+    const gn = g / 255;
+    const bn = b / 255;
+    const max = Math.max(rn, gn, bn);
+    const min = Math.min(rn, gn, bn);
+    const d = max - min;
+    let h = 0;
+    if (d !== 0) {
+      if (max === rn) h = ((gn - bn) / d) % 6;
+      else if (max === gn) h = (bn - rn) / d + 2;
+      else h = (rn - gn) / d + 4;
+      h /= 6;
+      if (h < 0) h += 1;
+    }
+    const s = max === 0 ? 0 : d / max;
+    const v = max;
+    return { h, s, v };
   }
 
   function shade(hex, factor) {

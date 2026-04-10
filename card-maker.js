@@ -14,8 +14,8 @@
   const AVATAR_CENTER_X = 500;
   const AVATAR_CENTER_Y = 410;
   const AVATAR_RADIUS = 68;
-  const EYE_LEFT = { x: 724, y: 166, r: 19 };
-  const EYE_RIGHT = { x: 852, y: 177, r: 17 };
+  const EYE_LEFT = { x: 712, y: 205, rx: 17, ry: 11, angle: -0.28 };
+  const EYE_RIGHT = { x: 845, y: 191, rx: 19, ry: 12, angle: 0.28 };
   const TEXT_X = 732;
   const TEXT_Y_1 = 497;
   const TEXT_Y_2 = 589;
@@ -196,27 +196,37 @@
       const eye = {
         x: scaleX(baseEye.x),
         y: scaleY(baseEye.y),
-        r: scaleU(baseEye.r)
+        rx: scaleU(baseEye.rx),
+        ry: scaleU(baseEye.ry),
+        angle: baseEye.angle
       };
+      const auraRadius = Math.max(eye.rx, eye.ry) * 2.05;
+
+      ctx.save();
+      ctx.translate(eye.x, eye.y);
+      ctx.rotate(eye.angle);
+
       // Outer aura.
-      const aura = ctx.createRadialGradient(eye.x, eye.y, eye.r * 0.2, eye.x, eye.y, eye.r * 2.4);
-      aura.addColorStop(0, "rgba(255,255,255,0.62)");
-      aura.addColorStop(0.35, hexToRgba(color, 0.38));
+      const aura = ctx.createRadialGradient(0, 0, eye.rx * 0.28, 0, 0, auraRadius);
+      aura.addColorStop(0, "rgba(255,255,255,0.45)");
+      aura.addColorStop(0.35, hexToRgba(color, 0.30));
       aura.addColorStop(1, hexToRgba(color, 0));
       ctx.fillStyle = aura;
       ctx.beginPath();
-      ctx.arc(eye.x, eye.y, eye.r * 2.4, 0, Math.PI * 2);
+      ctx.arc(0, 0, auraRadius, 0, Math.PI * 2);
       ctx.fill();
 
       // Core eye light.
-      const core = ctx.createRadialGradient(eye.x - eye.r * 0.25, eye.y - eye.r * 0.25, 1, eye.x, eye.y, eye.r);
+      const core = ctx.createRadialGradient(-eye.rx * 0.22, -eye.ry * 0.22, 1, 0, 0, eye.rx * 1.1);
       core.addColorStop(0, "rgba(255,255,255,0.95)");
-      core.addColorStop(0.45, hexToRgba(color, 0.9));
-      core.addColorStop(1, hexToRgba(color, 0.28));
+      core.addColorStop(0.5, hexToRgba(color, 0.72));
+      core.addColorStop(1, hexToRgba(color, 0.2));
       ctx.fillStyle = core;
       ctx.beginPath();
-      ctx.arc(eye.x, eye.y, eye.r, 0, Math.PI * 2);
+      ctx.ellipse(0, 0, eye.rx, eye.ry, 0, 0, Math.PI * 2);
       ctx.fill();
+
+      ctx.restore();
     }
 
     ctx.restore();

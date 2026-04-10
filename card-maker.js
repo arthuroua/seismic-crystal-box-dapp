@@ -8,18 +8,18 @@
   const TEMPLATE_SRC = "./assets/seismic-card-template.png?v=20260410a";
   const CRYSTAL_9_SRC = "./assets/magnitude-9-ref.jpg";
   // Overlay layout tuned for the custom 3012x2000 template art.
-  const CRYSTAL_POS_X = 1028;
-  const CRYSTAL_POS_Y = 696;
+  const CRYSTAL_POS_X = 1060;
+  const CRYSTAL_POS_Y = 720;
   const CRYSTAL_BASE_SIZE = 125;
   const AVATAR_CENTER_X = 500;
-  const AVATAR_CENTER_Y = 410;
-  const AVATAR_RADIUS = 68;
-  const EYE_LEFT = { x: 712, y: 205, rx: 17, ry: 11, angle: -0.28 };
-  const EYE_RIGHT = { x: 845, y: 191, rx: 19, ry: 12, angle: 0.28 };
-  const TEXT_X = 732;
-  const TEXT_Y_1 = 497;
-  const TEXT_Y_2 = 589;
-  const TEXT_Y_3 = 683;
+  const AVATAR_CENTER_Y = 482;
+  const AVATAR_RADIUS = 62;
+  const EYE_LEFT = { x: 704, y: 218, rx: 16, ry: 10, angle: -0.28 };
+  const EYE_RIGHT = { x: 852, y: 204, rx: 17, ry: 10, angle: 0.28 };
+  const TEXT_X = 748;
+  const TEXT_Y_1 = 520;
+  const TEXT_Y_2 = 612;
+  const TEXT_Y_3 = 704;
   const TEXT_MAX_WIDTH = 250;
   const HISTORY_STORAGE_KEY = "seismic-card-history-v1";
   const HISTORY_MAX_ITEMS = 24;
@@ -241,7 +241,7 @@
         ry: scaleU(baseEye.ry),
         angle: baseEye.angle
       };
-      const auraRadius = Math.max(eye.rx, eye.ry) * 2.05;
+      const auraRadius = Math.max(eye.rx, eye.ry) * 1.55;
 
       ctx.save();
       ctx.translate(eye.x, eye.y);
@@ -249,8 +249,8 @@
 
       // Outer aura.
       const aura = ctx.createRadialGradient(0, 0, eye.rx * 0.28, 0, 0, auraRadius);
-      aura.addColorStop(0, "rgba(255,255,255,0.45)");
-      aura.addColorStop(0.35, hexToRgba(color, 0.30));
+      aura.addColorStop(0, "rgba(255,255,255,0.35)");
+      aura.addColorStop(0.35, hexToRgba(color, 0.22));
       aura.addColorStop(1, hexToRgba(color, 0));
       ctx.fillStyle = aura;
       ctx.beginPath();
@@ -258,10 +258,10 @@
       ctx.fill();
 
       // Core eye light.
-      const core = ctx.createRadialGradient(-eye.rx * 0.22, -eye.ry * 0.22, 1, 0, 0, eye.rx * 1.1);
+      const core = ctx.createRadialGradient(-eye.rx * 0.16, -eye.ry * 0.1, 1, 0, 0, eye.rx * 0.95);
       core.addColorStop(0, "rgba(255,255,255,0.95)");
-      core.addColorStop(0.5, hexToRgba(color, 0.72));
-      core.addColorStop(1, hexToRgba(color, 0.2));
+      core.addColorStop(0.5, hexToRgba(color, 0.58));
+      core.addColorStop(1, hexToRgba(color, 0.16));
       ctx.fillStyle = core;
       ctx.beginPath();
       ctx.ellipse(0, 0, eye.rx, eye.ry, 0, 0, Math.PI * 2);

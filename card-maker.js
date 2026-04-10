@@ -7,12 +7,20 @@
   const BASE_TEMPLATE_HEIGHT = 1024;
   const TEMPLATE_SRC = "./assets/seismic-card-template.png?v=20260410a";
   const CRYSTAL_9_SRC = "./assets/magnitude-9-ref.jpg";
-  const CRYSTAL_POS_X = 1010;
-  const CRYSTAL_POS_Y = 686;
+  // Overlay layout tuned for the custom 3012x2000 template art.
+  const CRYSTAL_POS_X = 1028;
+  const CRYSTAL_POS_Y = 696;
   const CRYSTAL_BASE_SIZE = 125;
   const HEAD_CENTER_X = 776;
   const HEAD_CENTER_Y = 168;
   const HEAD_RADIUS = 116;
+  const EYE_LEFT = { x: 724, y: 166, r: 19 };
+  const EYE_RIGHT = { x: 852, y: 177, r: 17 };
+  const TEXT_X = 732;
+  const TEXT_Y_1 = 497;
+  const TEXT_Y_2 = 589;
+  const TEXT_Y_3 = 683;
+  const TEXT_MAX_WIDTH = 250;
   const CARD_MINTER_ABI = [
     "function mintCard(string metadataURI) returns (uint256 tokenId)",
     "function nextTokenId() view returns (uint256)"
@@ -163,10 +171,7 @@
 
   function drawMagnitudeEyes(magnitude) {
     const color = MAG_COLORS[magnitude] || "#FF66FF";
-    const eyes = [
-      { x: 713, y: 154, r: 22 },
-      { x: 839, y: 165, r: 20 }
-    ];
+    const eyes = [EYE_LEFT, EYE_RIGHT];
 
     ctx.save();
     ctx.globalCompositeOperation = "screen";
@@ -208,9 +213,9 @@
     ctx.textBaseline = "middle";
 
     // Align text to the center of dark torso slots.
-    drawField(data.nick, scaleX(710), scaleY(464), scaleX(250), textColor, strokeColor);
-    drawField(data.country, scaleX(710), scaleY(563), scaleX(250), textColor, strokeColor);
-    drawField(String(data.messages), scaleX(710), scaleY(660), scaleX(250), textColor, strokeColor);
+    drawField(data.nick, scaleX(TEXT_X), scaleY(TEXT_Y_1), scaleX(TEXT_MAX_WIDTH), textColor, strokeColor);
+    drawField(data.country, scaleX(TEXT_X), scaleY(TEXT_Y_2), scaleX(TEXT_MAX_WIDTH), textColor, strokeColor);
+    drawField(String(data.messages), scaleX(TEXT_X), scaleY(TEXT_Y_3), scaleX(TEXT_MAX_WIDTH), textColor, strokeColor);
   }
 
   function drawField(text, x, y, maxWidth, color, strokeColor) {

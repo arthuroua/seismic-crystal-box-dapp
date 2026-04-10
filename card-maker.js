@@ -11,9 +11,9 @@
   const CRYSTAL_POS_X = 1028;
   const CRYSTAL_POS_Y = 696;
   const CRYSTAL_BASE_SIZE = 125;
-  const HEAD_CENTER_X = 776;
-  const HEAD_CENTER_Y = 168;
-  const HEAD_RADIUS = 116;
+  const AVATAR_CENTER_X = 500;
+  const AVATAR_CENTER_Y = 410;
+  const AVATAR_RADIUS = 68;
   const EYE_LEFT = { x: 724, y: 166, r: 19 };
   const EYE_RIGHT = { x: 852, y: 177, r: 17 };
   const TEXT_X = 732;
@@ -106,7 +106,7 @@
     ctx.clearRect(0, 0, w, h);
     ctx.drawImage(templateImage, 0, 0, w, h);
 
-    drawHeadAvatar();
+    drawSideAvatar();
     drawMagnitudeEyes(data.magnitude);
     drawOverlayText(data);
     drawCrystal(data.magnitude);
@@ -134,7 +134,7 @@
       headAvatarImage = img;
       headAvatarObjectUrl = objectUrl;
       renderCard();
-      el.hintText.textContent = "Head avatar loaded.";
+      el.hintText.textContent = "Avatar loaded.";
     } catch (e) {
       console.error(e);
       headAvatarImage = null;
@@ -142,12 +142,12 @@
     }
   }
 
-  function drawHeadAvatar() {
+  function drawSideAvatar() {
     if (!headAvatarImage) return;
 
-    const cx = scaleX(HEAD_CENTER_X);
-    const cy = scaleY(HEAD_CENTER_Y);
-    const r = scaleU(HEAD_RADIUS);
+    const cx = scaleX(AVATAR_CENTER_X);
+    const cy = scaleY(AVATAR_CENTER_Y);
+    const r = scaleU(AVATAR_RADIUS);
     const srcW = headAvatarImage.width;
     const srcH = headAvatarImage.height;
     const srcSide = Math.min(srcW, srcH);
@@ -155,6 +155,16 @@
     const sy = (srcH - srcSide) * 0.5;
 
     ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(-0.08);
+    ctx.translate(-cx, -cy);
+
+    // Soft back plate to make avatar readable on the painted texture.
+    ctx.beginPath();
+    ctx.arc(cx, cy, r + scaleU(6), 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(38, 24, 20, 0.42)";
+    ctx.fill();
+
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.clip();
@@ -166,6 +176,12 @@
     edgeShade.addColorStop(1, "rgba(0,0,0,0.34)");
     ctx.fillStyle = edgeShade;
     ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.lineWidth = scaleU(6);
+    ctx.strokeStyle = "rgba(236, 214, 182, 0.95)";
+    ctx.stroke();
     ctx.restore();
   }
 

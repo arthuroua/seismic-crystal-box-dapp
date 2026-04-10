@@ -3,7 +3,9 @@
   const SITE_URL = cfg.siteUrl || window.location.origin;
   const CHAIN_ID_HEX = cfg.chainIdHex || "0x1404";
   const CHAIN_ID_DEC = Number(cfg.chainIdDecimal || 5124);
-  const TEMPLATE_SRC = "./assets/seismic-card-template.png";
+  const BASE_TEMPLATE_WIDTH = 1536;
+  const BASE_TEMPLATE_HEIGHT = 1024;
+  const TEMPLATE_SRC = "./assets/seismic-card-template.png?v=20260410a";
   const CRYSTAL_9_SRC = "./assets/magnitude-9-ref.jpg";
   const CRYSTAL_POS_X = 1010;
   const CRYSTAL_POS_Y = 686;
@@ -135,9 +137,9 @@
   function drawHeadAvatar() {
     if (!headAvatarImage) return;
 
-    const cx = HEAD_CENTER_X;
-    const cy = HEAD_CENTER_Y;
-    const r = HEAD_RADIUS;
+    const cx = scaleX(HEAD_CENTER_X);
+    const cy = scaleY(HEAD_CENTER_Y);
+    const r = scaleU(HEAD_RADIUS);
     const srcW = headAvatarImage.width;
     const srcH = headAvatarImage.height;
     const srcSide = Math.min(srcW, srcH);
@@ -169,7 +171,12 @@
     ctx.save();
     ctx.globalCompositeOperation = "screen";
 
-    for (const eye of eyes) {
+    for (const baseEye of eyes) {
+      const eye = {
+        x: scaleX(baseEye.x),
+        y: scaleY(baseEye.y),
+        r: scaleU(baseEye.r)
+      };
       // Outer aura.
       const aura = ctx.createRadialGradient(eye.x, eye.y, eye.r * 0.2, eye.x, eye.y, eye.r * 2.4);
       aura.addColorStop(0, "rgba(255,255,255,0.62)");
@@ -201,21 +208,21 @@
     ctx.textBaseline = "middle";
 
     // Align text to the center of dark torso slots.
-    drawField(data.nick, 710, 464, 250, textColor, strokeColor);
-    drawField(data.country, 710, 563, 250, textColor, strokeColor);
-    drawField(String(data.messages), 710, 660, 250, textColor, strokeColor);
+    drawField(data.nick, scaleX(710), scaleY(464), scaleX(250), textColor, strokeColor);
+    drawField(data.country, scaleX(710), scaleY(563), scaleX(250), textColor, strokeColor);
+    drawField(String(data.messages), scaleX(710), scaleY(660), scaleX(250), textColor, strokeColor);
   }
 
   function drawField(text, x, y, maxWidth, color, strokeColor) {
     const safe = String(text || "-");
-    let size = 50;
+    let size = scaleU(50);
     ctx.font = `700 ${size}px 'Space Grotesk', sans-serif`;
-    while (ctx.measureText(safe).width > maxWidth && size > 32) {
-      size -= 2;
+    while (ctx.measureText(safe).width > maxWidth && size > scaleU(32)) {
+      size -= scaleU(2);
       ctx.font = `700 ${size}px 'Space Grotesk', sans-serif`;
     }
     ctx.textAlign = "center";
-    ctx.lineWidth = 6;
+    ctx.lineWidth = scaleU(6);
     ctx.strokeStyle = strokeColor;
     ctx.strokeText(safe, x, y, maxWidth);
     ctx.fillStyle = color;
@@ -232,9 +239,9 @@
   }
 
   function drawCrystalFromRef(magnitude) {
-    const x = CRYSTAL_POS_X;
-    const y = CRYSTAL_POS_Y;
-    const size = CRYSTAL_BASE_SIZE * getMagnitudeScale(magnitude);
+    const x = scaleX(CRYSTAL_POS_X);
+    const y = scaleY(CRYSTAL_POS_Y);
+    const size = scaleU(CRYSTAL_BASE_SIZE) * getMagnitudeScale(magnitude);
     const targetH = size * 2.18;
     const targetW = targetH * (crystalCutoutImage.width / crystalCutoutImage.height);
     const dx = -targetW / 2;
@@ -251,9 +258,9 @@
   }
 
   function drawCrystalVector(magnitude) {
-    const x = CRYSTAL_POS_X;
-    const y = CRYSTAL_POS_Y;
-    const size = CRYSTAL_BASE_SIZE * getMagnitudeScale(magnitude);
+    const x = scaleX(CRYSTAL_POS_X);
+    const y = scaleY(CRYSTAL_POS_Y);
+    const size = scaleU(CRYSTAL_BASE_SIZE) * getMagnitudeScale(magnitude);
     const color = MAG_COLORS[magnitude] || MAG_COLORS[8];
 
     ctx.save();
@@ -673,6 +680,20 @@
   function getMagnitudeScale(magnitude) {
     const m = Math.min(9, Math.max(1, Number(magnitude) || 1));
     return 0.68 + ((m - 1) / 8) * 0.32;
+  }
+
+  function scaleX(v) {
+    return (v / BASE_TEMPLATE_WIDTH) * el.cardCanvas.width;
+  }
+
+  function scaleY(v) {
+    return (v / BASE_TEMPLATE_HEIGHT) * el.cardCanvas.height;
+  }
+
+  function scaleU(v) {
+    const sx = el.cardCanvas.width / BASE_TEMPLATE_WIDTH;
+    const sy = el.cardCanvas.height / BASE_TEMPLATE_HEIGHT;
+    return v * Math.min(sx, sy);
   }
 
   function createBadgePath(size) {

@@ -1,6 +1,5 @@
 (function () {
   const cfg = window.SEISMIC_DAPP_CONFIG || {};
-  const SITE_URL = cfg.siteUrl || window.location.origin;
   const CHAIN_ID_HEX = cfg.chainIdHex || "0x1404";
   const CHAIN_ID_DEC = Number(cfg.chainIdDecimal || 5124);
   const BASE_TEMPLATE_WIDTH = 1536;
@@ -897,12 +896,13 @@
   function shareToX() {
     renderCard();
     const d = getData();
+    const cardMakerUrl = new URL("./card-maker.html", window.location.href).toString();
     const text =
       `My Seismic card: ${d.nick} | ${d.country} | ${d.messages} Discord messages | Magnitude ${d.magnitude}.0. ` +
-      `Build yours on Seismic Testnet.`;
-    const intent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(SITE_URL)}`;
+      `You can also mint this card as NFT on Seismic Testnet.`;
+    const intent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(cardMakerUrl)}`;
     window.open(intent, "_blank", "noopener,noreferrer");
-    el.hintText.textContent = "Twitter/X opened. Attach downloaded image to your post.";
+    el.hintText.textContent = "Twitter/X opened with card-maker link. Attach downloaded image to your post.";
   }
 
   async function mintCardNft() {

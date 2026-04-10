@@ -85,33 +85,6 @@ select {
   font-size: 0.85rem;
 }
 
-.layout-box {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 10px;
-  background: rgba(14, 11, 29, 0.45);
-}
-
-.layout-box p {
-  margin: 0 0 8px;
-  color: var(--muted);
-  font-size: 0.85rem;
-}
-
-.layout-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.layout-grid label {
-  font-size: 0.8rem;
-}
-
-.layout-grid input {
-  padding: 8px;
-}
-
 .legend-grid {
   display: flex;
   flex-wrap: wrap;

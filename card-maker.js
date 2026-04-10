@@ -8,18 +8,18 @@
   const TEMPLATE_SRC = "./assets/seismic-card-template.png?v=20260410a";
   const CRYSTAL_9_SRC = "./assets/magnitude-9-ref.jpg";
   // Overlay layout tuned for the custom 3012x2000 template art.
-  const CRYSTAL_POS_X = 1060;
+  const CRYSTAL_POS_X = 1018;
   const CRYSTAL_POS_Y = 720;
   const CRYSTAL_BASE_SIZE = 125;
   const AVATAR_CENTER_X = 500;
-  const AVATAR_CENTER_Y = 482;
+  const AVATAR_CENTER_Y = 520;
   const AVATAR_RADIUS = 62;
-  const EYE_LEFT = { x: 704, y: 218, rx: 16, ry: 10, angle: -0.28 };
-  const EYE_RIGHT = { x: 852, y: 204, rx: 17, ry: 10, angle: 0.28 };
+  const EYE_LEFT = { x: 704, y: 204, rx: 16, ry: 10, angle: -0.28 };
+  const EYE_RIGHT = { x: 852, y: 190, rx: 17, ry: 10, angle: 0.28 };
   const TEXT_X = 748;
   const TEXT_Y_1 = 520;
-  const TEXT_Y_2 = 612;
-  const TEXT_Y_3 = 704;
+  const TEXT_Y_2 = 634;
+  const TEXT_Y_3 = 732;
   const TEXT_MAX_WIDTH = 250;
   const HISTORY_STORAGE_KEY = "seismic-card-history-v1";
   const HISTORY_MAX_ITEMS = 24;
@@ -46,10 +46,6 @@
     messagesInput: document.getElementById("messagesInput"),
     magnitudeInput: document.getElementById("magnitudeInput"),
     headAvatarInput: document.getElementById("headAvatarInput"),
-    textXInput: document.getElementById("textXInput"),
-    textY1Input: document.getElementById("textY1Input"),
-    textY2Input: document.getElementById("textY2Input"),
-    textY3Input: document.getElementById("textY3Input"),
     renderBtn: document.getElementById("renderBtn"),
     downloadBtn: document.getElementById("downloadBtn"),
     shareBtn: document.getElementById("shareBtn"),
@@ -90,10 +86,6 @@
     el.shareBtn.addEventListener("click", shareToX);
     el.mintBtn?.addEventListener("click", mintCardNft);
     el.headAvatarInput?.addEventListener("change", onHeadAvatarChange);
-    el.textXInput?.addEventListener("input", renderCard);
-    el.textY1Input?.addEventListener("input", renderCard);
-    el.textY2Input?.addEventListener("input", renderCard);
-    el.textY3Input?.addEventListener("input", renderCard);
     el.clearHistoryBtn?.addEventListener("click", clearHistory);
     el.historyList?.addEventListener("click", onHistoryCardClick);
 
@@ -116,22 +108,6 @@
     };
   }
 
-  function getLayout() {
-    return {
-      textX: readNumberInput(el.textXInput, TEXT_X, 0, BASE_TEMPLATE_WIDTH),
-      textY1: readNumberInput(el.textY1Input, TEXT_Y_1, 0, BASE_TEMPLATE_HEIGHT),
-      textY2: readNumberInput(el.textY2Input, TEXT_Y_2, 0, BASE_TEMPLATE_HEIGHT),
-      textY3: readNumberInput(el.textY3Input, TEXT_Y_3, 0, BASE_TEMPLATE_HEIGHT)
-    };
-  }
-
-  function readNumberInput(node, fallback, min, max) {
-    if (!node) return fallback;
-    const n = Number(node.value);
-    if (!Number.isFinite(n)) return fallback;
-    return Math.min(max, Math.max(min, n));
-  }
-
   function handleGenerateClick() {
     renderCard();
     pushCurrentToHistory();
@@ -140,7 +116,6 @@
 
   function renderCard() {
     const data = getData();
-    const layout = getLayout();
     const w = el.cardCanvas.width;
     const h = el.cardCanvas.height;
 
@@ -149,7 +124,7 @@
 
     drawSideAvatar();
     drawMagnitudeEyes(data.magnitude);
-    drawOverlayText(data, layout);
+    drawOverlayText(data);
     drawCrystal(data.magnitude);
   }
 
@@ -273,16 +248,16 @@
     ctx.restore();
   }
 
-  function drawOverlayText(data, layout) {
+  function drawOverlayText(data) {
     const textColor = "#E6D0BC";
     const strokeColor = "rgba(42,22,14,0.72)";
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
 
     // Align text to the center of dark torso slots.
-    drawField(data.nick, scaleX(layout.textX), scaleY(layout.textY1), scaleX(TEXT_MAX_WIDTH), textColor, strokeColor);
-    drawField(data.country, scaleX(layout.textX), scaleY(layout.textY2), scaleX(TEXT_MAX_WIDTH), textColor, strokeColor);
-    drawField(String(data.messages), scaleX(layout.textX), scaleY(layout.textY3), scaleX(TEXT_MAX_WIDTH), textColor, strokeColor);
+    drawField(data.nick, scaleX(TEXT_X), scaleY(TEXT_Y_1), scaleX(TEXT_MAX_WIDTH), textColor, strokeColor);
+    drawField(data.country, scaleX(TEXT_X), scaleY(TEXT_Y_2), scaleX(TEXT_MAX_WIDTH), textColor, strokeColor);
+    drawField(String(data.messages), scaleX(TEXT_X), scaleY(TEXT_Y_3), scaleX(TEXT_MAX_WIDTH), textColor, strokeColor);
   }
 
   function drawField(text, x, y, maxWidth, color, strokeColor) {

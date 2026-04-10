@@ -50,6 +50,27 @@
             Avatar (optional)
             <input id="headAvatarInput" type="file" accept="image/*" />
           </label>
+          <div class="layout-box">
+            <p>Text coordinates:</p>
+            <div class="layout-grid">
+              <label>
+                X
+                <input id="textXInput" type="number" step="1" value="732" />
+              </label>
+              <label>
+                Nick Y
+                <input id="textY1Input" type="number" step="1" value="497" />
+              </label>
+              <label>
+                Country Y
+                <input id="textY2Input" type="number" step="1" value="589" />
+              </label>
+              <label>
+                Messages Y
+                <input id="textY3Input" type="number" step="1" value="683" />
+              </label>
+            </div>
+          </div>
           <div class="legend">
             <p>Magnitude colors:</p>
             <div class="legend-grid">
@@ -74,6 +95,12 @@
           <a class="btn btn-ghost" href="./index.html">Back to dApp</a>
         </div>
         <p id="hintText" class="hint"></p>
+
+        <div class="history-head">
+          <h2>Generation History</h2>
+          <button id="clearHistoryBtn" class="btn btn-secondary" type="button">Clear</button>
+        </div>
+        <div id="historyList" class="history-list"></div>
       </section>
 
       <section class="panel preview">
@@ -82,6 +109,6 @@
     </main>
 
     <script src="./config.js"></script>
-    <script src="./card-maker.js?v=20260410d"></script>
+    <script src="./card-maker.js?v=20260410e"></script>
   </body>
 </html>

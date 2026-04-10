@@ -85,6 +85,33 @@ select {
   font-size: 0.85rem;
 }
 
+.layout-box {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(14, 11, 29, 0.45);
+}
+
+.layout-box p {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.layout-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.layout-grid label {
+  font-size: 0.8rem;
+}
+
+.layout-grid input {
+  padding: 8px;
+}
+
 .legend-grid {
   display: flex;
   flex-wrap: wrap;
@@ -153,6 +180,80 @@ select {
   min-height: 1.2em;
   color: var(--muted);
   font-size: 0.9rem;
+}
+
+.history-head {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.history-head h2 {
+  margin: 0;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 1.4rem;
+  letter-spacing: 0.6px;
+}
+
+.history-head .btn {
+  padding: 7px 10px;
+  font-size: 0.82rem;
+}
+
+.history-list {
+  margin-top: 8px;
+  display: grid;
+  gap: 8px;
+  max-height: 300px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.history-empty {
+  padding: 10px;
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.history-card {
+  display: grid;
+  grid-template-columns: 82px 1fr;
+  gap: 8px;
+  text-align: left;
+  border: 1px solid rgba(255, 126, 228, 0.3);
+  border-radius: 12px;
+  background: rgba(22, 16, 38, 0.8);
+  padding: 8px;
+  cursor: pointer;
+}
+
+.history-card:hover {
+  border-color: rgba(255, 181, 246, 0.5);
+}
+
+.history-thumb {
+  width: 82px;
+  height: 55px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: #1d1830;
+}
+
+.history-meta {
+  display: grid;
+  gap: 2px;
+  font-size: 0.77rem;
+  color: #d9cbe9;
+}
+
+.history-title {
+  font-weight: 700;
+  color: #f8edff;
 }
 
 .preview {

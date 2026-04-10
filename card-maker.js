@@ -21,6 +21,8 @@
   const TEXT_Y_2 = 589;
   const TEXT_Y_3 = 683;
   const TEXT_MAX_WIDTH = 250;
+  const HISTORY_STORAGE_KEY = "seismic-card-history-v1";
+  const HISTORY_MAX_ITEMS = 24;
   const CARD_MINTER_ABI = [
     "function mintCard(string metadataURI) returns (uint256 tokenId)",
     "function nextTokenId() view returns (uint256)"
@@ -44,10 +46,16 @@
     messagesInput: document.getElementById("messagesInput"),
     magnitudeInput: document.getElementById("magnitudeInput"),
     headAvatarInput: document.getElementById("headAvatarInput"),
+    textXInput: document.getElementById("textXInput"),
+    textY1Input: document.getElementById("textY1Input"),
+    textY2Input: document.getElementById("textY2Input"),
+    textY3Input: document.getElementById("textY3Input"),
     renderBtn: document.getElementById("renderBtn"),
     downloadBtn: document.getElementById("downloadBtn"),
     shareBtn: document.getElementById("shareBtn"),
     mintBtn: document.getElementById("mintBtn"),
+    clearHistoryBtn: document.getElementById("clearHistoryBtn"),
+    historyList: document.getElementById("historyList"),
     hintText: document.getElementById("hintText"),
     cardCanvas: document.getElementById("cardCanvas")
   };
@@ -58,6 +66,7 @@
   let crystalCutoutImage = null;
   let headAvatarImage = null;
   let headAvatarObjectUrl = null;
+  let historyItems = [];
 
   init().catch((e) => {
     console.error(e);
@@ -76,11 +85,20 @@
     el.cardCanvas.width = templateImage.width;
     el.cardCanvas.height = templateImage.height;
 
-    el.renderBtn.addEventListener("click", renderCard);
+    el.renderBtn.addEventListener("click", handleGenerateClick);
     el.downloadBtn.addEventListener("click", downloadCard);
     el.shareBtn.addEventListener("click", shareToX);
     el.mintBtn?.addEventListener("click", mintCardNft);
     el.headAvatarInput?.addEventListener("change", onHeadAvatarChange);
+    el.textXInput?.addEventListener("input", renderCard);
+    el.textY1Input?.addEventListener("input", renderCard);
+    el.textY2Input?.addEventListener("input", renderCard);
+    el.textY3Input?.addEventListener("input", renderCard);
+    el.clearHistoryBtn?.addEventListener("click", clearHistory);
+    el.historyList?.addEventListener("click", onHistoryCardClick);
+
+    historyItems = loadHistory();
+    renderHistory();
 
     renderCard();
   }
@@ -98,8 +116,31 @@
     };
   }
 
+  function getLayout() {
+    return {
+      textX: readNumberInput(el.textXInput, TEXT_X, 0, BASE_TEMPLATE_WIDTH),
+      textY1: readNumberInput(el.textY1Input, TEXT_Y_1, 0, BASE_TEMPLATE_HEIGHT),
+      textY2: readNumberInput(el.textY2Input, TEXT_Y_2, 0, BASE_TEMPLATE_HEIGHT),
+      textY3: readNumberInput(el.textY3Input, TEXT_Y_3, 0, BASE_TEMPLATE_HEIGHT)
+    };
+  }
+
+  function readNumberInput(node, fallback, min, max) {
+    if (!node) return fallback;
+    const n = Number(node.value);
+    if (!Number.isFinite(n)) return fallback;
+    return Math.min(max, Math.max(min, n));
+  }
+
+  function handleGenerateClick() {
+    renderCard();
+    pushCurrentToHistory();
+    el.hintText.textContent = "Card generated and saved to history.";
+  }
+
   function renderCard() {
     const data = getData();
+    const layout = getLayout();
     const w = el.cardCanvas.width;
     const h = el.cardCanvas.height;
 
@@ -108,7 +149,7 @@
 
     drawSideAvatar();
     drawMagnitudeEyes(data.magnitude);
-    drawOverlayText(data);
+    drawOverlayText(data, layout);
     drawCrystal(data.magnitude);
   }
 
@@ -232,16 +273,16 @@
     ctx.restore();
   }
 
-  function drawOverlayText(data) {
+  function drawOverlayText(data, layout) {
     const textColor = "#E6D0BC";
     const strokeColor = "rgba(42,22,14,0.72)";
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
 
     // Align text to the center of dark torso slots.
-    drawField(data.nick, scaleX(TEXT_X), scaleY(TEXT_Y_1), scaleX(TEXT_MAX_WIDTH), textColor, strokeColor);
-    drawField(data.country, scaleX(TEXT_X), scaleY(TEXT_Y_2), scaleX(TEXT_MAX_WIDTH), textColor, strokeColor);
-    drawField(String(data.messages), scaleX(TEXT_X), scaleY(TEXT_Y_3), scaleX(TEXT_MAX_WIDTH), textColor, strokeColor);
+    drawField(data.nick, scaleX(layout.textX), scaleY(layout.textY1), scaleX(TEXT_MAX_WIDTH), textColor, strokeColor);
+    drawField(data.country, scaleX(layout.textX), scaleY(layout.textY2), scaleX(TEXT_MAX_WIDTH), textColor, strokeColor);
+    drawField(String(data.messages), scaleX(layout.textX), scaleY(layout.textY3), scaleX(TEXT_MAX_WIDTH), textColor, strokeColor);
   }
 
   function drawField(text, x, y, maxWidth, color, strokeColor) {
@@ -756,6 +797,118 @@
     ctx.beginPath();
     ctx.arc(size * 0.2, -size * 0.03, size * 0.16, Math.PI / 2, (Math.PI * 3) / 2);
     ctx.stroke();
+  }
+
+  function pushCurrentToHistory() {
+    const data = getData();
+    const item = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      nick: data.nick,
+      country: data.country,
+      messages: data.messages,
+      magnitude: data.magnitude,
+      createdAt: new Date().toISOString(),
+      thumbnail: buildHistoryThumb()
+    };
+
+    historyItems = [item, ...historyItems].slice(0, HISTORY_MAX_ITEMS);
+    persistHistory();
+    renderHistory();
+  }
+
+  function buildHistoryThumb() {
+    const maxW = 320;
+    const aspect = el.cardCanvas.height / el.cardCanvas.width;
+    const w = maxW;
+    const h = Math.max(1, Math.round(maxW * aspect));
+    const off = document.createElement("canvas");
+    off.width = w;
+    off.height = h;
+    const octx = off.getContext("2d");
+    octx.drawImage(el.cardCanvas, 0, 0, w, h);
+    return off.toDataURL("image/jpeg", 0.76);
+  }
+
+  function loadHistory() {
+    try {
+      const raw = localStorage.getItem(HISTORY_STORAGE_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed
+        .filter((x) => x && typeof x === "object")
+        .slice(0, HISTORY_MAX_ITEMS);
+    } catch {
+      return [];
+    }
+  }
+
+  function persistHistory() {
+    try {
+      localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(historyItems));
+    } catch (e) {
+      console.error(e);
+      el.hintText.textContent = "History storage limit reached.";
+    }
+  }
+
+  function clearHistory() {
+    historyItems = [];
+    persistHistory();
+    renderHistory();
+    el.hintText.textContent = "History cleared.";
+  }
+
+  function onHistoryCardClick(event) {
+    const card = event.target.closest(".history-card");
+    if (!card) return;
+    const id = card.getAttribute("data-id");
+    const item = historyItems.find((x) => x.id === id);
+    if (!item) return;
+
+    el.nickInput.value = item.nick ?? "";
+    el.countryInput.value = item.country ?? "";
+    el.messagesInput.value = String(item.messages ?? 0);
+    el.magnitudeInput.value = String(item.magnitude ?? 8);
+    renderCard();
+    el.hintText.textContent = `Loaded from history: ${item.nick || "-"}`;
+  }
+
+  function renderHistory() {
+    if (!el.historyList) return;
+    if (!historyItems.length) {
+      el.historyList.innerHTML = `<div class="history-empty">No cards yet. Click "Generate Card" to save first card.</div>`;
+      return;
+    }
+
+    el.historyList.innerHTML = historyItems
+      .map((item) => {
+        const date = new Date(item.createdAt || Date.now());
+        const when = Number.isNaN(date.getTime()) ? "-" : date.toLocaleString();
+        const safeNick = escapeHtml(item.nick || "-");
+        const safeCountry = escapeHtml(item.country || "-");
+        const safeThumb = item.thumbnail || "";
+        return `
+          <button class="history-card" type="button" data-id="${item.id}">
+            <img class="history-thumb" src="${safeThumb}" alt="Generated card preview" />
+            <div class="history-meta">
+              <div class="history-title">${safeNick} · M${item.magnitude}.0</div>
+              <div>${safeCountry}</div>
+              <div>Messages: ${item.messages}</div>
+              <div>${escapeHtml(when)}</div>
+            </div>
+          </button>
+        `;
+      })
+      .join("");
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll("\"", "&quot;");
   }
 
   function downloadCard() {
